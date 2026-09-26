@@ -32,7 +32,8 @@
         ];
 
         frontendDeps = with pkgs; [
-         
+          pnpm
+          nodejs
         ];
 
       in
