@@ -1,5 +1,0 @@
-package apiserver
-
-func addRoutes() {
-	
-}

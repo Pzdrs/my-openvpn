@@ -12,8 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"pycrs.cz/openvpn-client-zone/internal/apiserver"
+	"pycrs.cz/openvpn-client-zone/internal/auth"
 	"pycrs.cz/openvpn-client-zone/internal/bootstrap"
+	"pycrs.cz/openvpn-client-zone/internal/rest"
+	"pycrs.cz/openvpn-client-zone/internal/service"
 )
 
 func run(ctx context.Context) error {
@@ -33,7 +35,14 @@ func run(ctx context.Context) error {
 	}
 	defer connPool.Close()
 
-	server := apiserver.NewServer(ctx)
+	oidcProvider, err := auth.NewOIDCProvider(ctx, config.OIDC)
+	if err != nil {
+		return fmt.Errorf("failed to initialize OIDC provider: %w", err)
+	}
+
+	tokenService := service.NewTokenService(config.JWT)
+
+	server := rest.NewServer(oidcProvider, tokenService)
 
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort(config.Server.Host, strconv.Itoa(config.Server.Port)),
@@ -50,6 +59,7 @@ func run(ctx context.Context) error {
 
 	// graceful shutdown logic running in a separate goroutine waiting for context cancellation
 	var wg sync.WaitGroup
+	wg.Add(1)
 	wg.Go(func() {
 		<-ctx.Done()
 		log.Print("Shutting down HTTP server...")

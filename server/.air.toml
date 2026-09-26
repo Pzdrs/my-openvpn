@@ -1,0 +1,4 @@
+[build]
+  bin = "bin/api"
+  cmd = "make build"
+  exclude_dir = ["api", "bin", "tmp", "web"]

@@ -1,2 +1,4 @@
 internal/queries/
 client-zone.yaml
+tmp/
+bin/
