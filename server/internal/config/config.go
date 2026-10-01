@@ -1,10 +1,10 @@
 package config
 
 type Configuration struct {
-	Server  ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
-	OIDC    OIDCConfig
-	JWT     JWTConfig
+	OIDC     OIDCConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -25,11 +25,9 @@ type OIDCConfig struct {
 	ClientID     string
 	ClientSecret string
 	IssuerURL    string
-	RedirectURL  string
-	Scopes       []string
 }
 
 type JWTConfig struct {
-	SecretKey string
+	SecretKey     string
 	TokenLifetime string
 }

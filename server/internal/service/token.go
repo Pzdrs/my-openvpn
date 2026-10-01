@@ -24,8 +24,6 @@ func NewTokenService(cfg config.JWTConfig) *TokenService {
 		panic("Invalid token lifetime in configuration: " + err.Error())
 	}
 
-	fmt.Println(ttl)
-
 	return &TokenService{
 		secretKey:     []byte(cfg.SecretKey),
 		TokenLifetime: ttl,

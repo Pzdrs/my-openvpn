@@ -1,18 +1,18 @@
-package auth 
+package auth
 
 import (
 	"context"
 	"fmt"
 
-	"golang.org/x/oauth2"
 	"github.com/coreos/go-oidc/v3/oidc"
+	"golang.org/x/oauth2"
 	"pycrs.cz/openvpn-client-zone/internal/config"
 )
 
 type OIDCProvider struct {
 	Config       config.OIDCConfig
-	OAuth2Config oauth2.Config 
-	Verifier	 *oidc.IDTokenVerifier
+	OAuth2Config oauth2.Config
+	Verifier     *oidc.IDTokenVerifier
 }
 
 func NewOIDCProvider(ctx context.Context, cfg config.OIDCConfig) (*OIDCProvider, error) {
@@ -24,8 +24,7 @@ func NewOIDCProvider(ctx context.Context, cfg config.OIDCConfig) (*OIDCProvider,
 	oauth2Cfg := oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
-		RedirectURL:  cfg.RedirectURL,
-		Scopes:       cfg.Scopes,
+		Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail},
 		Endpoint:     provider.Endpoint(),
 	}
 

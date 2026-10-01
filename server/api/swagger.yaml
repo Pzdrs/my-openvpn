@@ -1,0 +1,76 @@
+basePath: /api/v1
+definitions:
+  dto.OAuthAuthorizeRequest:
+    properties:
+      redirect_uri:
+        type: string
+    required:
+    - redirect_uri
+    type: object
+  dto.OAuthAuthorizeResponse:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  dto.OAuthCallbackRequest:
+    properties:
+      state:
+        type: string
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  dto.OAuthCallbackResponse:
+    type: object
+info:
+  contact: {}
+  title: OpenVPN Client Zone API
+  version: "1.0"
+paths:
+  /oauth/authorize:
+    post:
+      operationId: StartOAuth
+      parameters:
+      - description: OAuth2 authorization request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.OAuthAuthorizeRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OAuthAuthorizeResponse'
+      summary: Initiate OAuth2 authorization flow
+      tags:
+      - oauth
+  /oauth/backchannel-logout:
+    post:
+      operationId: HandleBackchannelLogout
+      responses: {}
+      summary: Handle backchannel logout
+      tags:
+      - oauth
+  /oauth/callback:
+    post:
+      operationId: FinishOAuth
+      parameters:
+      - description: OAuth2 callback request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.OAuthCallbackRequest'
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/dto.OAuthCallbackResponse'
+      summary: Handle OAuth2 callback
+      tags:
+      - oauth
+swagger: "2.0"

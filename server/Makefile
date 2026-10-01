@@ -6,3 +6,7 @@ run:
 
 sqlc:
 	sqlc generate -f infra/db/sqlc.yaml
+
+swag:
+	swag fmt
+	swag init -g server.go --parseInternal -o ./api -d internal/rest

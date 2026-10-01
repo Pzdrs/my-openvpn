@@ -11,6 +11,9 @@ import (
 	"pycrs.cz/openvpn-client-zone/internal/service"
 )
 
+// @title		OpenVPN Client Zone API
+// @version	1.0
+// @BasePath	/api/v1
 func NewServer(
 	oidcProvider *auth.OIDCProvider,
 	tokenService *service.TokenService,
@@ -20,14 +23,16 @@ func NewServer(
 
 	RequireAuthenticated := middleware.NewRequireAuthenticatedMiddleware(tokenService)
 
-	authController := controller.NewAuthController(oidcProvider, tokenService)
+	authController := controller.NewAuthController()
 	userController := controller.NewUserController()
+	oauthController := controller.NewOAuthController(oidcProvider, tokenService)
 
 	r.Route("/api/v1", func(api chi.Router) {
 		addRoutes(
 			api,
 			authController,
 			userController,
+			oauthController,
 			RequireAuthenticated,
 		)
 	})

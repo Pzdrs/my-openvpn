@@ -7,7 +7,6 @@ import (
 )
 
 type UserController struct {
-
 }
 
 func NewUserController() *UserController {

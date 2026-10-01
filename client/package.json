@@ -6,14 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen:api": "npx swagger2openapi ../server/api/swagger.json -o .tmp-openapi3.json && npx oazapfts --optimistic --useEnumType .tmp-openapi3.json lib/api/client.ts && rm -f .tmp-openapi3.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@oazapfts/runtime": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
+    "oazapfts": "^7.5.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "shadcn": "^4.21.0",

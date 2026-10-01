@@ -1,0 +1,118 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "OpenVPN Client Zone API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/oauth/authorize": {
+            "post": {
+                "tags": [
+                    "oauth"
+                ],
+                "summary": "Initiate OAuth2 authorization flow",
+                "operationId": "StartOAuth",
+                "parameters": [
+                    {
+                        "description": "OAuth2 authorization request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OAuthAuthorizeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OAuthAuthorizeResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/oauth/backchannel-logout": {
+            "post": {
+                "tags": [
+                    "oauth"
+                ],
+                "summary": "Handle backchannel logout",
+                "operationId": "HandleBackchannelLogout",
+                "responses": {}
+            }
+        },
+        "/oauth/callback": {
+            "post": {
+                "tags": [
+                    "oauth"
+                ],
+                "summary": "Handle OAuth2 callback",
+                "operationId": "FinishOAuth",
+                "parameters": [
+                    {
+                        "description": "OAuth2 callback request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OAuthCallbackRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/dto.OAuthCallbackResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.OAuthAuthorizeRequest": {
+            "type": "object",
+            "required": [
+                "redirect_uri"
+            ],
+            "properties": {
+                "redirect_uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OAuthAuthorizeResponse": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OAuthCallbackRequest": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "state": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OAuthCallbackResponse": {
+            "type": "object"
+        }
+    }
+}
