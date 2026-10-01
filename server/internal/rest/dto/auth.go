@@ -9,7 +9,7 @@ type OAuthAuthorizeResponse struct {
 }
 
 type OAuthCallbackRequest struct {
-	URL   string `json:"url" validate:"required,url"`
+	URL string `json:"url" validate:"required,url"`
 }
 
 type OAuthCallbackResponse struct{}

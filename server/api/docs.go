@@ -15,6 +15,20 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Initiate logout",
+                "operationId": "Logout",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/oauth/authorize": {
             "post": {
                 "tags": [
@@ -111,9 +125,6 @@ const docTemplate = `{
                 "url"
             ],
             "properties": {
-                "state": {
-                    "type": "string"
-                },
                 "url": {
                     "type": "string"
                 }

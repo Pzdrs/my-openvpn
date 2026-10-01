@@ -16,8 +16,6 @@ definitions:
     type: object
   dto.OAuthCallbackRequest:
     properties:
-      state:
-        type: string
       url:
         type: string
     required:
@@ -30,6 +28,15 @@ info:
   title: OpenVPN Client Zone API
   version: "1.0"
 paths:
+  /auth/logout:
+    post:
+      operationId: Logout
+      responses:
+        "204":
+          description: No Content
+      summary: Initiate logout
+      tags:
+      - auth
   /oauth/authorize:
     post:
       operationId: StartOAuth

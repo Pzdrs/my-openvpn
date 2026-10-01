@@ -21,10 +21,18 @@ export type DtoOAuthAuthorizeResponse = {
     url: string;
 };
 export type DtoOAuthCallbackRequest = {
-    state?: string;
     url: string;
 };
 export type DtoOAuthCallbackResponse = object;
+/**
+ * Initiate logout
+ */
+export function logout(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText("/auth/logout", {
+        ...opts,
+        method: "POST"
+    }));
+}
 /**
  * Initiate OAuth2 authorization flow
  */
