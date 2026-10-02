@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -26,7 +27,7 @@ func NewServer(
 
 	authController := controller.NewAuthController()
 	userController := controller.NewUserController(userService)
-	oauthController := controller.NewOAuthController(oidcProvider, tokenService, userService)
+	oauthController := controller.NewOAuthController(slog.Default(), oidcProvider, tokenService, userService)
 
 	r.Route("/api/v1", func(api chi.Router) {
 		addRoutes(

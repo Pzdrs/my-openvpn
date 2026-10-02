@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -21,10 +21,14 @@ import (
 )
 
 func run(ctx context.Context) error {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
+
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
 
-	log.Printf("Starting openvpn-client-zone")
+	slog.Info("Starting openvpn-client-zone")
 
 	config, err := bootstrap.InitConfig()
 	if err != nil {
@@ -47,7 +51,7 @@ func run(ctx context.Context) error {
 	userRepository := repository.NewUserRepository(q)
 
 	tokenService := service.NewTokenService(config.JWT)
-	userService := service.NewUserService(userRepository)
+	userService := service.NewUserService(slog.Default().With("service", "user"), userRepository)
 
 	server := rest.NewServer(oidcProvider, tokenService, userService)
 
@@ -58,9 +62,9 @@ func run(ctx context.Context) error {
 
 	// we run the server in a separate goroutine
 	go func() {
-		log.Printf("Listening on %s\n", httpServer.Addr)
+		slog.Info("Listening on", "address", httpServer.Addr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
+			slog.Error("error listening and serving", "error", err)
 		}
 	}()
 
@@ -69,12 +73,13 @@ func run(ctx context.Context) error {
 	wg.Add(1)
 	wg.Go(func() {
 		<-ctx.Done()
-		log.Print("Shutting down HTTP server...")
+		slog.Info("Shutting down HTTP server...")
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+		slog.Info("Shutting down HTTP server", "timeout", 10*time.Second)
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			fmt.Fprintf(os.Stderr, "error shutting down http server: %s\n", err)
+			slog.Error("error shutting down http server", "error", err)
 		}
 	})
 	wg.Wait()

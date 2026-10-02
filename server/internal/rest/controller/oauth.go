@@ -2,7 +2,7 @@ package controller
 
 import (
 	"crypto/rand"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -15,19 +15,22 @@ import (
 )
 
 type OAuthController struct {
+	logger       *slog.Logger
 	oidcProvider *auth.OIDCProvider
 	tokenService *service.TokenService
 	userService  *service.UserService
 }
 
 func NewOAuthController(
-	oidcProvider *auth.OIDCProvider, 
+	logger       *slog.Logger,
+	oidcProvider *auth.OIDCProvider,
 	tokenService *service.TokenService,
 	userService *service.UserService) *OAuthController {
 	return &OAuthController{
+		logger:       logger,
 		oidcProvider: oidcProvider,
 		tokenService: tokenService,
-		userService: userService,
+		userService:  userService,
 	}
 }
 
@@ -40,6 +43,8 @@ func NewOAuthController(
 //	@Success	204		{object}	dto.OAuthCallbackResponse
 //	@Router		/oauth/callback [post]
 func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	c.logger.InfoContext(ctx, "OAuth callback received")
 	req, ok := rutils.DecodeValidate[dto.OAuthCallbackRequest](w, r)
 	if !ok {
 		return
@@ -65,29 +70,32 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
 		return
 	}
+	c.logger.DebugContext(ctx, "OAuth callback: state validated")
 
 	if code == "" {
 		http.Error(w, "Missing code in callback", http.StatusBadRequest)
 		return
 	}
 
-	oauth_token, err := c.oidcProvider.OAuth2Config.Exchange(r.Context(), code)
+	oauthToken, err := c.oidcProvider.OAuth2Config.Exchange(ctx, code)
 	if err != nil {
 		http.Error(w, "Failed to exchange code for token", http.StatusInternalServerError)
 		return
 	}
+	c.logger.DebugContext(ctx, "OAuth callback: authorization code exchanged")
 
-	rawIDToken, ok := oauth_token.Extra("id_token").(string)
+	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok {
 		http.Error(w, "No id_token in response", http.StatusBadRequest)
 		return
 	}
 
-	idToken, err := c.oidcProvider.Verifier.Verify(r.Context(), rawIDToken)
+	idToken, err := c.oidcProvider.Verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
 		return
 	}
+	c.logger.DebugContext(ctx, "OAuth callback: ID token verified")
 
 	var claims struct {
 		Subject string `json:"sub"`
@@ -101,11 +109,12 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := c.userService.FindOrCreateUser(r.Context(), claims.Subject)
+	user, err := c.userService.FindOrCreateUser(ctx, claims.Subject)
 	if err != nil {
 		http.Error(w, "Failed to get or create user", http.StatusInternalServerError)
 		return
 	}
+	c.logger.DebugContext(ctx, "OAuth callback: user ready")
 
 	token, err := c.tokenService.GenerateToken(user.ID, claims.Email, claims.Name, claims.Picture)
 	if err != nil {
@@ -135,6 +144,7 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	})
 
 	w.WriteHeader(http.StatusNoContent)
+	c.logger.InfoContext(ctx, "OAuth callback completed successfully", "user_id", user.ID)
 }
 
 // HandleAuthorize initiates the OAuth2 authorization flow by generating an authorization URL and setting a state cookie.
