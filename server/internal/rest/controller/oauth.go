@@ -2,6 +2,7 @@ package controller
 
 import (
 	"crypto/rand"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	"pycrs.cz/openvpn-client-zone/internal/auth"
 	"pycrs.cz/openvpn-client-zone/internal/rest/dto"
+	"pycrs.cz/openvpn-client-zone/internal/rest/problem"
 	rutils "pycrs.cz/openvpn-client-zone/internal/rest/utils"
 	"pycrs.cz/openvpn-client-zone/internal/service"
 	"pycrs.cz/openvpn-client-zone/internal/utils"
@@ -44,7 +46,9 @@ func NewOAuthController(
 //	@Router		/oauth/callback [post]
 func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	c.logger.InfoContext(ctx, "OAuth callback received")
+
 	req, ok := rutils.DecodeValidate[dto.OAuthCallbackRequest](w, r)
 	if !ok {
 		return
@@ -52,13 +56,13 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 
 	stateCookie, err := r.Cookie(utils.OAUTH_STATE_COOKIE_NAME)
 	if err != nil {
-		http.Error(w, "Missing state cookie", http.StatusBadRequest)
+		problem.Write(w, problem.NewBadRequest(r, errors.New("missing state cookie")))
 		return
 	}
 
 	url, err := url.Parse(req.URL)
 	if err != nil {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		problem.Write(w, problem.NewBadRequest(r, errors.New("invalid URL")))
 		return
 	}
 	query := url.Query()
@@ -67,32 +71,32 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	state := query.Get("state")
 
 	if state != stateCookie.Value {
-		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
+		problem.Write(w, problem.NewBadRequest(r, errors.New("invalid state parameter")))
 		return
 	}
 	c.logger.DebugContext(ctx, "OAuth callback: state validated")
 
 	if code == "" {
-		http.Error(w, "Missing code in callback", http.StatusBadRequest)
+		problem.Write(w, problem.NewBadRequest(r, errors.New("missing code in callback")))
 		return
 	}
 
 	oauthToken, err := c.oidcProvider.OAuth2Config.Exchange(ctx, code)
 	if err != nil {
-		http.Error(w, "Failed to exchange code for token", http.StatusInternalServerError)
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to exchange code for token")))
 		return
 	}
 	c.logger.DebugContext(ctx, "OAuth callback: authorization code exchanged")
 
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok {
-		http.Error(w, "No id_token in response", http.StatusBadRequest)
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("missing id_token in token response")))
 		return
 	}
 
 	idToken, err := c.oidcProvider.Verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		http.Error(w, "Failed to verify ID token", http.StatusUnauthorized)
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to verify ID token")))
 		return
 	}
 	c.logger.DebugContext(ctx, "OAuth callback: ID token verified")
@@ -105,20 +109,20 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := idToken.Claims(&claims); err != nil {
-		http.Error(w, "Failed to parse claims", http.StatusInternalServerError)
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to parse claims")))
 		return
 	}
 
 	user, err := c.userService.FindOrCreateUser(ctx, claims.Subject)
 	if err != nil {
-		http.Error(w, "Failed to get or create user", http.StatusInternalServerError)
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to get or create user")))
 		return
 	}
 	c.logger.DebugContext(ctx, "OAuth callback: user ready")
 
 	token, err := c.tokenService.GenerateToken(user.ID, claims.Email, claims.Name, claims.Picture)
 	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to generate token")))
 		return
 	}
 

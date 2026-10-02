@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"pycrs.cz/openvpn-client-zone/internal/rest/dto"
+	"pycrs.cz/openvpn-client-zone/internal/rest/problem"
 	"pycrs.cz/openvpn-client-zone/internal/rest/utils"
 	"pycrs.cz/openvpn-client-zone/internal/service"
 )
@@ -28,7 +30,9 @@ func NewUserController(userService *service.UserService) *UserController {
 func (c *UserController) HandleMe(w http.ResponseWriter, r *http.Request) {
 	claims, ok := service.GetTokenClaims(r.Context())
 	if !ok {
-		http.Error(w, "Failed to retrieve token claims", http.StatusInternalServerError)
+		problem.Write(
+			w, problem.NewInternalServerError(r, errors.New("failed to retrieve token claims")),
+		)
 		return
 	}
 

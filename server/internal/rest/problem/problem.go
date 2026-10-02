@@ -60,6 +60,15 @@ func NewInternalServerError(r *http.Request, err error) ProblemDetails {
 	)
 }
 
+func NewBadRequest(r *http.Request, err error) ProblemDetails {
+	return New(
+		r, http.StatusBadRequest,
+		"Bad Request",
+		utils.FirstUpper(strings.TrimSpace(err.Error())),
+		"bad-request",
+	)
+}
+
 func Write(w http.ResponseWriter, p Problem) error {
 
 	w.Header().Set("Content-Type", "application/problem+json")
