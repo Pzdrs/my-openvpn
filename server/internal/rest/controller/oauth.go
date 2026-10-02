@@ -2,6 +2,7 @@ package controller
 
 import (
 	"crypto/rand"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -16,12 +17,17 @@ import (
 type OAuthController struct {
 	oidcProvider *auth.OIDCProvider
 	tokenService *service.TokenService
+	userService  *service.UserService
 }
 
-func NewOAuthController(oidcProvider *auth.OIDCProvider, tokenService *service.TokenService) *OAuthController {
+func NewOAuthController(
+	oidcProvider *auth.OIDCProvider, 
+	tokenService *service.TokenService,
+	userService *service.UserService) *OAuthController {
 	return &OAuthController{
 		oidcProvider: oidcProvider,
 		tokenService: tokenService,
+		userService: userService,
 	}
 }
 
@@ -84,11 +90,10 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	}
 
 	var claims struct {
-		Subject       string `json:"sub"` // Unique User ID from IdP
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-		Name          string `json:"name"`
-		Picture       string `json:"picture"`
+		Subject string `json:"sub"`
+		Email   string `json:"email"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
 	}
 
 	if err := idToken.Claims(&claims); err != nil {
@@ -96,18 +101,19 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	token, err := c.tokenService.GenerateToken(claims.Subject)
+	user, err := c.userService.FindOrCreateUser(r.Context(), claims.Subject)
+	if err != nil {
+		http.Error(w, "Failed to get or create user", http.StatusInternalServerError)
+		return
+	}
+
+	token, err := c.tokenService.GenerateToken(user.ID, claims.Email, claims.Name, claims.Picture)
 	if err != nil {
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:   utils.OAUTH_STATE_COOKIE_NAME,
-		Value:  "",
-		MaxAge: -1,
-		Path:   "/",
-	})
+	clearStateCookie(w)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     utils.ACCESS_TOKEN_COOKIE_NAME,
@@ -152,25 +158,27 @@ func (c *OAuthController) HandleAuthorize(w http.ResponseWriter, r *http.Request
 		oauth2.SetAuthURLParam("redirect_uri", req.RedirectURI),
 	)
 
+	setStateCookie(w, nonce)
+	rutils.Encode(w, r, http.StatusOK, dto.OAuthAuthorizeResponse{URL: url})
+}
+
+func clearStateCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   utils.OAUTH_STATE_COOKIE_NAME,
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
+}
+
+func setStateCookie(w http.ResponseWriter, state string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     utils.OAUTH_STATE_COOKIE_NAME,
-		Value:    nonce,
+		Value:    state,
 		MaxAge:   utils.OAUTH_STATE_COOKIE_MAX_AGE,
 		HttpOnly: true,
 		Secure:   false, // Set to true in production with HTTPS
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 	})
-
-	rutils.Encode(w, r, http.StatusOK, dto.OAuthAuthorizeResponse{URL: url})
-}
-
-// HandleBackchannelLogout handles backchannel logout requests from the identity provider.
-//
-//	@Summary	Handle backchannel logout
-//	@Id			HandleBackchannelLogout
-//	@Tags		oauth
-//	@Router		/oauth/backchannel-logout [post]
-func (c *OAuthController) HandleBackchannelLogout(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement backchannel logout logic here
 }

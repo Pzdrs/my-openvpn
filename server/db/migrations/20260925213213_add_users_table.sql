@@ -2,12 +2,12 @@
 -- +goose StatementBegin
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    external_id VARCHAR(50) NOT NULL UNIQUE,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    external_id VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_users_external_id ON users (external_id);
 
 CREATE
 OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = NOW();

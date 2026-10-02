@@ -11,6 +11,24 @@
         "reveal": "never"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Generate sqlc queries",
+      "type": "shell",
+      "command": "cd server && make sqlc",
+      "presentation": {
+        "reveal": "never"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Migrate database",
+      "type": "shell",
+      "command": "cd server && make migrate",
+      "presentation": {
+        "reveal": "never"
+      },
+      "problemMatcher": []
     }
   ]
 }

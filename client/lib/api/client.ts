@@ -24,6 +24,12 @@ export type DtoOAuthCallbackRequest = {
     url: string;
 };
 export type DtoOAuthCallbackResponse = object;
+export type DtoUser = {
+    email: string;
+    id: string;
+    name: string;
+    picture: string;
+};
 /**
  * Initiate logout
  */
@@ -47,15 +53,6 @@ export function startOAuth(dtoOAuthAuthorizeRequest: DtoOAuthAuthorizeRequest, o
     })));
 }
 /**
- * Handle backchannel logout
- */
-export function handleBackchannelLogout(opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchText("/oauth/backchannel-logout", {
-        ...opts,
-        method: "POST"
-    }));
-}
-/**
  * Handle OAuth2 callback
  */
 export function finishOAuth(dtoOAuthCallbackRequest: DtoOAuthCallbackRequest, opts?: Oazapfts.RequestOpts) {
@@ -67,4 +64,15 @@ export function finishOAuth(dtoOAuthCallbackRequest: DtoOAuthCallbackRequest, op
         method: "POST",
         body: dtoOAuthCallbackRequest
     })));
+}
+/**
+ * Get authenticated user info
+ */
+export function getMe(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: DtoUser;
+    }>("/users/me", {
+        ...opts
+    }));
 }

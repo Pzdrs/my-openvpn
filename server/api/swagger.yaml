@@ -23,6 +23,22 @@ definitions:
     type: object
   dto.OAuthCallbackResponse:
     type: object
+  dto.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      picture:
+        type: string
+    required:
+    - email
+    - id
+    - name
+    - picture
+    type: object
 info:
   contact: {}
   title: OpenVPN Client Zone API
@@ -55,13 +71,6 @@ paths:
       summary: Initiate OAuth2 authorization flow
       tags:
       - oauth
-  /oauth/backchannel-logout:
-    post:
-      operationId: HandleBackchannelLogout
-      responses: {}
-      summary: Handle backchannel logout
-      tags:
-      - oauth
   /oauth/callback:
     post:
       operationId: FinishOAuth
@@ -80,4 +89,15 @@ paths:
       summary: Handle OAuth2 callback
       tags:
       - oauth
+  /users/me:
+    get:
+      operationId: GetMe
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.User'
+      summary: Get authenticated user info
+      tags:
+      - user
 swagger: "2.0"

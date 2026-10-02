@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,6 +12,9 @@ import (
 
 type TokenClaims struct {
 	jwt.RegisteredClaims
+	Email   string `json:"email,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Picture string `json:"picture,omitempty"`
 }
 
 type TokenService struct {
@@ -36,7 +40,7 @@ func (s *TokenService) ValidateToken(tokenString string) (*TokenClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		claims,
-		func(token *jwt.Token) (interface{}, error) {
+		func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
@@ -58,9 +62,12 @@ func (s *TokenService) ValidateToken(tokenString string) (*TokenClaims, error) {
 	return claims, nil
 }
 
-func (s *TokenService) GenerateToken(userID string) (string, error) {
+func (s *TokenService) GenerateToken(userID int32, email string, name string, picture string) (string, error) {
 	claims := &TokenClaims{
-		Subject:   userID,
+		Subject:   strconv.Itoa(int(userID)),
+		Email:     email,
+		Name:      name,
+		Picture:   picture,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.TokenLifetime)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}

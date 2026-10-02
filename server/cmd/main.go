@@ -14,6 +14,8 @@ import (
 
 	"pycrs.cz/openvpn-client-zone/internal/auth"
 	"pycrs.cz/openvpn-client-zone/internal/bootstrap"
+	"pycrs.cz/openvpn-client-zone/internal/queries"
+	"pycrs.cz/openvpn-client-zone/internal/repository"
 	"pycrs.cz/openvpn-client-zone/internal/rest"
 	"pycrs.cz/openvpn-client-zone/internal/service"
 )
@@ -40,9 +42,14 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize OIDC provider: %w", err)
 	}
 
-	tokenService := service.NewTokenService(config.JWT)
+	q := queries.New(connPool)
 
-	server := rest.NewServer(oidcProvider, tokenService)
+	userRepository := repository.NewUserRepository(q)
+
+	tokenService := service.NewTokenService(config.JWT)
+	userService := service.NewUserService(userRepository)
+
+	server := rest.NewServer(oidcProvider, tokenService, userService)
 
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort(config.Server.Host, strconv.Itoa(config.Server.Port)),

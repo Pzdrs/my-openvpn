@@ -57,16 +57,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/oauth/backchannel-logout": {
-            "post": {
-                "tags": [
-                    "oauth"
-                ],
-                "summary": "Handle backchannel logout",
-                "operationId": "HandleBackchannelLogout",
-                "responses": {}
-            }
-        },
         "/oauth/callback": {
             "post": {
                 "tags": [
@@ -90,6 +80,23 @@ const docTemplate = `{
                         "description": "No Content",
                         "schema": {
                             "$ref": "#/definitions/dto.OAuthCallbackResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me": {
+            "get": {
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get authenticated user info",
+                "operationId": "GetMe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
                         }
                     }
                 }
@@ -132,6 +139,29 @@ const docTemplate = `{
         },
         "dto.OAuthCallbackResponse": {
             "type": "object"
+        },
+        "dto.User": {
+            "type": "object",
+            "required": [
+                "email",
+                "id",
+                "name",
+                "picture"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "picture": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`

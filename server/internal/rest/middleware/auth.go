@@ -24,6 +24,7 @@ func NewRequireAuthenticatedMiddleware(tokenService *service.TokenService) func(
 
 			claims, err := tokenService.ValidateToken(cookie.Value)
 			if err != nil {
+				clearAuthCookies(w)
 				problem.Write(w, problem.New(
 					r, http.StatusUnauthorized,
 					"Unauthenticated",
@@ -40,4 +41,19 @@ func NewRequireAuthenticatedMiddleware(tokenService *service.TokenService) func(
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func clearAuthCookies(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   utils.ACCESS_TOKEN_COOKIE_NAME,
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:   utils.IS_AUTHENTICATED_COOKIE_NAME,
+		Value:  "false",
+		MaxAge: -1,
+		Path:   "/",
+	})
 }

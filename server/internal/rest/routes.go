@@ -16,13 +16,12 @@ func addRoutes(
 	RequireAuthenticated func(http.Handler) http.Handler,
 ) {
 	r.Route("/auth", func(r chi.Router) {
-		r.With(RequireAuthenticated).Get("/logout", authController.HandleLogout)
+		r.With(RequireAuthenticated).Post("/logout", authController.HandleLogout)
 	})
 
 	r.Route("/oauth", func(r chi.Router) {
 		r.Post("/authorize", oauthController.HandleAuthorize)
 		r.Post("/callback", oauthController.HandleCallback)
-		r.Post("/backchannel-logout", oauthController.HandleBackchannelLogout)
 	})
 
 	r.With(RequireAuthenticated).Route("/users", func(r chi.Router) {

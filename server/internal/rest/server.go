@@ -17,6 +17,7 @@ import (
 func NewServer(
 	oidcProvider *auth.OIDCProvider,
 	tokenService *service.TokenService,
+	userService *service.UserService,
 ) http.Handler {
 	r := chi.NewRouter()
 	r.Use(chi_middleware.Logger)
@@ -24,8 +25,8 @@ func NewServer(
 	RequireAuthenticated := middleware.NewRequireAuthenticatedMiddleware(tokenService)
 
 	authController := controller.NewAuthController()
-	userController := controller.NewUserController()
-	oauthController := controller.NewOAuthController(oidcProvider, tokenService)
+	userController := controller.NewUserController(userService)
+	oauthController := controller.NewOAuthController(oidcProvider, tokenService, userService)
 
 	r.Route("/api/v1", func(api chi.Router) {
 		addRoutes(

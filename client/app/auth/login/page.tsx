@@ -1,5 +1,6 @@
 "use client";
 
+import { Route } from "@/lib/route";
 import { oauth } from "@/lib/utils";
 import { AlertCircle, ArrowRight, LoaderCircle, Network, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -59,7 +60,7 @@ export default function LoginPage() {
               <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-slate-500 dark:text-slate-400">{error}</p>
               <button
                 className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
-                onClick={() => window.location.reload()}
+                onClick={() => {window.location.href = Route.login();}}
                 type="button"
               >
                 Try again <ArrowRight className="size-4" />
