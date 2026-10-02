@@ -23,7 +23,7 @@ export default function Header() {
           <Network className="size-[18px]" strokeWidth={2.25} />
         </div>
         <span className="text-[15px] font-semibold tracking-tight text-slate-900">
-          OpenVPN Lounge
+          My OpenVPN
         </span>
       </div>
       <div className="flex items-center gap-1">

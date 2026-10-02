@@ -45,7 +45,7 @@ export default function LoginPage() {
             <Network className="size-5" strokeWidth={2.2} />
           </div>
           <div>
-            <p className="text-sm font-semibold tracking-tight">OpenVPN Lounge</p>
+            <p className="text-sm font-semibold tracking-tight">My OpenVPN</p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Secure network portal</p>
           </div>
         </header>

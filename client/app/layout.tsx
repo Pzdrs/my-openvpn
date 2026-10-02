@@ -4,7 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth/context";
 
 export const metadata: Metadata = {
-  title: "OpenVPN Lounge",
+  title: "My OpenVPN",
   description: "OpenVPN profile and device management.",
 };
 
