@@ -129,6 +129,25 @@ paths:
       summary: Get servers that the user has access to
       tags:
       - servers
+  /servers/{serverId}/profile:
+    get:
+      operationId: DownloadServerProfile
+      parameters:
+      - description: Server ID
+        in: path
+        name: serverId
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File stream
+          schema:
+            type: file
+      summary: Download server profile
+      tags:
+      - servers
   /users/me:
     get:
       operationId: GetMe

@@ -7,6 +7,7 @@ import ProfileCard from "@/components/profile-card";
 import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
 import { DtoServer, getUserServers } from "@/lib/api/client";
+import { ok } from "@oazapfts/runtime";
 import {
   FileKey2,
   Laptop,
@@ -94,7 +95,7 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchServers() {
-      getUserServers()
+      ok(getUserServers())
         .then((response) => {
           setServers(response);
           if (response.length > 0) {

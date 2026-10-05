@@ -9,6 +9,7 @@ import (
 
 type ServerRepository interface {
 	GetUserServers(ctx context.Context, uid int32) ([]*model.Server, error)
+	GetServerProfile(ctx context.Context, serverID int32) (*model.Profile, error)
 }
 
 type postgresServerRepository struct {
@@ -22,7 +23,7 @@ func NewServerRepository(q *queries.Queries) ServerRepository {
 }
 
 func (r *postgresServerRepository) GetUserServers(ctx context.Context, uid int32) ([]*model.Server, error) {
-	rows, err := r.q.GetUserServers(ctx)
+	rows, err := r.q.GerUserServers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -31,20 +32,20 @@ func (r *postgresServerRepository) GetUserServers(ctx context.Context, uid int32
 
 	for _, row := range rows {
 		server := &model.Server{
-			ID:          row.Server.ID,
-			Name:        row.Server.Name,
-			Description: row.Server.Description.String,
-			CreatedAt:   row.Server.CreatedAt.Time,
-			UpdatedAt:   row.Server.UpdatedAt.Time,
+			ID:          row.ID,
+			Name:        row.Name,
+			Description: row.Description.String,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
 		}
 
-		if row.Profile.ID.Valid {
+		if row.ProfileID.Valid {
 			server.Profile = &model.Profile{
-				ID:        row.Profile.ID.Int32,
-				Data:      row.Profile.ProfileData.String,
-				Hash:      row.Profile.ProfileHash.String,
-				CreatedAt: row.Profile.CreatedAt.Time,
-				UpdatedAt: row.Profile.UpdatedAt.Time,
+				ID:        row.ProfileID.Int32,
+				Data:      row.ProfileData.String,
+				Hash:      row.ProfileHash.String,
+				CreatedAt: row.ProfileCreatedAt.Time,
+				UpdatedAt: row.ProfileUpdatedAt.Time,
 			}
 		}
 
@@ -52,6 +53,21 @@ func (r *postgresServerRepository) GetUserServers(ctx context.Context, uid int32
 	}
 
 	return servers, nil
+}
+
+func (r *postgresServerRepository) GetServerProfile(ctx context.Context, serverID int32) (*model.Profile, error) {
+	row, err := r.q.GetServerProfile(ctx, serverID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Profile{
+		ID:        row.ID,
+		Data:      row.ProfileData,
+		Hash:      row.ProfileHash,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
+	}, nil
 }
 
 // Compile-time check

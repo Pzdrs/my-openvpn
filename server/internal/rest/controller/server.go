@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"pycrs.cz/openvpn-client-zone/internal/model"
 	"pycrs.cz/openvpn-client-zone/internal/rest/dto"
 	"pycrs.cz/openvpn-client-zone/internal/rest/problem"
@@ -60,4 +62,49 @@ func (c *ServerController) HandleUserServers(w http.ResponseWriter, r *http.Requ
 	}
 
 	utils.Encode(w, r, http.StatusOK, dto.ServersModelToDTO(serversValue))
+}
+
+// HandleDownloadProfile handles the request to download a server profile.
+//
+//	@Summary	Download server profile
+//	@Id			DownloadServerProfile
+//	@Tags		servers
+//	@Param		serverId	path	int	true	"Server ID"
+//	@Produce	octet-stream
+//	@Success	200	{file}	binary	"File stream"
+//	@Router		/servers/{serverId}/profile [get]
+func (c *ServerController) HandleDownloadProfile(w http.ResponseWriter, r *http.Request) {
+	serverID, err := strconv.ParseInt(chi.URLParam(r, "serverID"), 10, 32)
+	if err != nil {
+		problem.Write(w, problem.NewBadRequest(r, errors.New("Invalid server ID")))
+		return
+	}
+
+	profile, err := c.s.GetServerProfile(r.Context(), int32(serverID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			problem.Write(
+				w, problem.NewNotFound(r, errors.New("Profile not found")),
+			)
+			return
+		}
+
+		problem.Write(
+			w, problem.NewInternalServerError(r, err),
+		)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Disposition", "attachment; filename=profile.ovpn")
+	w.Header().Set("Content-Length", strconv.Itoa(len(profile.Data)))
+
+	flusher, ok := w.(http.Flusher)
+	if ok {
+		flusher.Flush()
+	}
+
+	w.Write([]byte(profile.Data))
+
+	w.WriteHeader(http.StatusOK)
 }

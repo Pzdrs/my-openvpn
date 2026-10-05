@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { DtoUser, getMe, logout as _logout } from "../api/client";
 import { Route } from "../route";
 import { Spinner } from "@/components/ui/spinner";
+import { ok } from "@oazapfts/runtime";
 
 interface AuthContextType {
   user: DtoUser;
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getMe()
+    ok(getMe())
       .then((user) => {
         setUser(user);
         console.log("Authenticated user:", user);

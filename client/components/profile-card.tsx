@@ -1,4 +1,4 @@
-import { DtoServer } from "@/lib/api/client";
+import { downloadServerProfile, DtoServer } from "@/lib/api/client";
 import { Check, Download, FileKey2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
@@ -63,6 +63,26 @@ export default function ProfileCard({ server }: Props) {
     }));
   }
 
+  function downloadProfile() {
+    downloadServerProfile(server.id).then((response) => {
+      const filename = response.headers
+        .get("Content-Disposition")
+        ?.split("filename=")[1];
+      const blob = response.data;
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "profile.ovpn";
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    });
+  }
+
   return (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -107,6 +127,7 @@ export default function ProfileCard({ server }: Props) {
       <Button
         className="mt-3 h-10 w-full rounded-xl bg-slate-900 text-sm shadow-sm hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
         size="lg"
+        onClick={downloadProfile}
       >
         <Download className="size-4" /> Download profile
       </Button>

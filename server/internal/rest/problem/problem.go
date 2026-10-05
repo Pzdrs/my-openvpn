@@ -69,6 +69,15 @@ func NewBadRequest(r *http.Request, err error) ProblemDetails {
 	)
 }
 
+func NewNotFound(r *http.Request, err error) ProblemDetails {
+	return New(
+		r, http.StatusNotFound,
+		"Not Found",
+		utils.FirstUpper(strings.TrimSpace(err.Error())),
+		"not-found",
+	)
+}
+
 func Write(w http.ResponseWriter, p Problem) error {
 
 	w.Header().Set("Content-Type", "application/problem+json")

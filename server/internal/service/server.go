@@ -21,3 +21,8 @@ func (s *ServerService) GetUserServers(ctx context.Context, userId int32) ([]*mo
 	servers, err := s.r.GetUserServers(ctx, userId)
 	return servers, err
 }
+
+func (s *ServerService) GetServerProfile(ctx context.Context, serverID int32) (*model.Profile, error) {
+	profile, err := s.r.GetServerProfile(ctx, serverID)
+	return profile, err
+}

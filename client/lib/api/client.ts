@@ -45,56 +45,67 @@ export type DtoUser = {
  * Initiate logout
  */
 export function logout(opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchText("/auth/logout", {
+    return oazapfts.fetchText("/auth/logout", {
         ...opts,
         method: "POST"
-    }));
+    });
 }
 /**
  * Initiate OAuth2 authorization flow
  */
 export function startOAuth(dtoOAuthAuthorizeRequest: DtoOAuthAuthorizeRequest, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchJson<{
+    return oazapfts.fetchJson<{
         status: 200;
         data: DtoOAuthAuthorizeResponse;
     }>("/oauth/authorize", oazapfts.json({
         ...opts,
         method: "POST",
         body: dtoOAuthAuthorizeRequest
-    })));
+    }));
 }
 /**
  * Handle OAuth2 callback
  */
 export function finishOAuth(dtoOAuthCallbackRequest: DtoOAuthCallbackRequest, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchJson<{
+    return oazapfts.fetchJson<{
         status: 204;
         data: DtoOAuthCallbackResponse;
     }>("/oauth/callback", oazapfts.json({
         ...opts,
         method: "POST",
         body: dtoOAuthCallbackRequest
-    })));
+    }));
 }
 /**
  * Get servers that the user has access to
  */
 export function getUserServers(opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchJson<{
+    return oazapfts.fetchJson<{
         status: 200;
         data: DtoServer[];
     }>("/servers", {
         ...opts
-    }));
+    });
+}
+/**
+ * Download server profile
+ */
+export function downloadServerProfile(serverId: number, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchBlob<{
+        status: 200;
+        data: Blob;
+    }>(`/servers/${encodeURIComponent(serverId)}/profile`, {
+        ...opts
+    });
 }
 /**
  * Get authenticated user info
  */
 export function getMe(opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchJson<{
+    return oazapfts.fetchJson<{
         status: 200;
         data: DtoUser;
     }>("/users/me", {
         ...opts
-    }));
+    });
 }

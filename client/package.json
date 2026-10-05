@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "gen:api": "npx swagger2openapi ../server/api/swagger.json -o .tmp-openapi3.json && npx oazapfts --optimistic --useEnumType .tmp-openapi3.json lib/api/client.ts && rm -f .tmp-openapi3.json"
+    "gen:api": "npx swagger2openapi ../server/api/swagger.json -o .tmp-openapi3.json && npx oazapfts --useEnumType .tmp-openapi3.json lib/api/client.ts && rm -f .tmp-openapi3.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

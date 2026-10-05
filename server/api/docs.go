@@ -105,6 +105,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/servers/{serverId}/profile": {
+            "get": {
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Download server profile",
+                "operationId": "DownloadServerProfile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Server ID",
+                        "name": "serverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File stream",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "tags": [
