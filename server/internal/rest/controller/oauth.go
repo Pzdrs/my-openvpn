@@ -24,7 +24,7 @@ type OAuthController struct {
 }
 
 func NewOAuthController(
-	logger       *slog.Logger,
+	logger *slog.Logger,
 	oidcProvider *auth.OIDCProvider,
 	tokenService *service.TokenService,
 	userService *service.UserService) *OAuthController {

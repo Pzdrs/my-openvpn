@@ -77,6 +77,26 @@
                 }
             }
         },
+        "/servers": {
+            "get": {
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get servers that the user has access to",
+                "operationId": "GetUserServers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Server"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "tags": [
@@ -131,6 +151,46 @@
         },
         "dto.OAuthCallbackResponse": {
             "type": "object"
+        },
+        "dto.Profile": {
+            "type": "object",
+            "required": [
+                "data",
+                "hash",
+                "updated_at"
+            ],
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "hash": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Server": {
+            "type": "object",
+            "required": [
+                "id",
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/dto.Profile"
+                }
+            }
         },
         "dto.User": {
             "type": "object",

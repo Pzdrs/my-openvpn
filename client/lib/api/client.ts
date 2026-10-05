@@ -24,6 +24,17 @@ export type DtoOAuthCallbackRequest = {
     url: string;
 };
 export type DtoOAuthCallbackResponse = object;
+export type DtoProfile = {
+    data: string;
+    hash: string;
+    updated_at: string;
+};
+export type DtoServer = {
+    description?: string;
+    id: number;
+    name: string;
+    profile?: DtoProfile;
+};
 export type DtoUser = {
     email: string;
     id: string;
@@ -64,6 +75,17 @@ export function finishOAuth(dtoOAuthCallbackRequest: DtoOAuthCallbackRequest, op
         method: "POST",
         body: dtoOAuthCallbackRequest
     })));
+}
+/**
+ * Get servers that the user has access to
+ */
+export function getUserServers(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: DtoServer[];
+    }>("/servers", {
+        ...opts
+    }));
 }
 /**
  * Get authenticated user info

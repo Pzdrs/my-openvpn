@@ -49,11 +49,13 @@ func run(ctx context.Context) error {
 	q := queries.New(connPool)
 
 	userRepository := repository.NewUserRepository(q)
+	serverRepository := repository.NewServerRepository(q)
 
 	tokenService := service.NewTokenService(config.JWT)
 	userService := service.NewUserService(slog.Default().With("service", "user"), userRepository)
+	serverService := service.NewServerService(serverRepository)
 
-	server := rest.NewServer(oidcProvider, tokenService, userService)
+	server := rest.NewServer(oidcProvider, tokenService, userService, serverService)
 
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort(config.Server.Host, strconv.Itoa(config.Server.Port)),

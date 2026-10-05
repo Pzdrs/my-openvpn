@@ -23,6 +23,33 @@ definitions:
     type: object
   dto.OAuthCallbackResponse:
     type: object
+  dto.Profile:
+    properties:
+      data:
+        type: string
+      hash:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - data
+    - hash
+    - updated_at
+    type: object
+  dto.Server:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      profile:
+        $ref: '#/definitions/dto.Profile'
+    required:
+    - id
+    - name
+    type: object
   dto.User:
     properties:
       email:
@@ -89,6 +116,19 @@ paths:
       summary: Handle OAuth2 callback
       tags:
       - oauth
+  /servers:
+    get:
+      operationId: GetUserServers
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.Server'
+            type: array
+      summary: Get servers that the user has access to
+      tags:
+      - servers
   /users/me:
     get:
       operationId: GetMe

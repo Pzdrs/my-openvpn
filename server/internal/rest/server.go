@@ -19,6 +19,7 @@ func NewServer(
 	oidcProvider *auth.OIDCProvider,
 	tokenService *service.TokenService,
 	userService *service.UserService,
+	serverService *service.ServerService,
 ) http.Handler {
 	r := chi.NewRouter()
 	r.Use(chi_middleware.Logger)
@@ -28,6 +29,7 @@ func NewServer(
 	authController := controller.NewAuthController()
 	userController := controller.NewUserController(userService)
 	oauthController := controller.NewOAuthController(slog.Default(), oidcProvider, tokenService, userService)
+	serverController := controller.NewServerController(serverService)
 
 	r.Route("/api/v1", func(api chi.Router) {
 		addRoutes(
@@ -35,6 +37,7 @@ func NewServer(
 			authController,
 			userController,
 			oauthController,
+			serverController,
 			RequireAuthenticated,
 		)
 	})

@@ -12,6 +12,7 @@ func addRoutes(
 	authController *controller.AuthController,
 	userController *controller.UserController,
 	oauthController *controller.OAuthController,
+	serverController *controller.ServerController,
 
 	RequireAuthenticated func(http.Handler) http.Handler,
 ) {
@@ -26,5 +27,9 @@ func addRoutes(
 
 	r.With(RequireAuthenticated).Route("/users", func(r chi.Router) {
 		r.Get("/me", userController.HandleMe)
+	})
+
+	r.With(RequireAuthenticated).Route("/servers", func(r chi.Router) {
+		r.Get("/", serverController.HandleUserServers)
 	})
 }
