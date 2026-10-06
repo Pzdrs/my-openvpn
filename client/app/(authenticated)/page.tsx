@@ -4,94 +4,22 @@ import Header from "@/components/Header";
 import NoProfileCard from "@/components/no-profile-card";
 import NoServersCard from "@/components/no-servers-card";
 import ProfileCard from "@/components/profile-card";
+import ProfileEditorDialog, { ProfileEditorState } from "@/components/modal/profile-editor-dialog";
 import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
-import { DtoServer, getUserServers } from "@/lib/api/client";
+import { DtoProfile, DtoServer, getUserServers } from "@/lib/api/client";
+import { useAuth } from "@/lib/auth/context";
 import { ok } from "@oazapfts/runtime";
-import {
-  FileKey2,
-  Laptop,
-  MonitorSmartphone,
-  ShieldCheck,
-  Smartphone,
-} from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type Device = {
-  name: string;
-  detail: string;
-  icon: typeof Laptop;
-  current: boolean;
-};
-
-type EnvironmentServer = {
-  id: string;
-  name: string;
-  description: string;
-  hasProfile: boolean;
-  deviceLimit: number;
-  devices: Device[];
-};
-
-// Frontend placeholders until server and profile endpoints are available.
-const servers: EnvironmentServer[] = [
-  {
-    id: "production",
-    name: "Production",
-    description: "Live environment",
-    hasProfile: true,
-    deviceLimit: 5,
-    devices: [
-      {
-        name: "MacBook Pro",
-        detail: "macOS · Last seen today",
-        icon: Laptop,
-        current: true,
-      },
-      {
-        name: "iPhone 15 Pro",
-        detail: "iOS · Last seen today",
-        icon: Smartphone,
-        current: false,
-      },
-      {
-        name: "ThinkPad X1",
-        detail: "Windows · Last seen Sep 22",
-        icon: MonitorSmartphone,
-        current: false,
-      },
-    ],
-  },
-  {
-    id: "staging",
-    name: "Staging",
-    description: "Pre-release testing",
-    hasProfile: false,
-    deviceLimit: 3,
-    devices: [
-      {
-        name: "MacBook Pro",
-        detail: "macOS · Last seen yesterday",
-        icon: Laptop,
-        current: true,
-      },
-    ],
-  },
-  {
-    id: "development",
-    name: "Development",
-    description: "Development environment",
-    hasProfile: false,
-    deviceLimit: 3,
-    devices: [],
-  },
-];
-
 export default function Home() {
+  const { user } = useAuth();
   const [servers, setServers] = useState<DtoServer[]>([]);
   const [selectedServerId, setSelectedServerId] = useState(
     servers.length > 0 ? servers[0].id : 0,
   );
+  const [profileEditor, setProfileEditor] = useState<ProfileEditorState>(null);
 
   useEffect(() => {
     async function fetchServers() {
@@ -114,6 +42,26 @@ export default function Home() {
   const selectedServer = servers.find(
     (server) => server.id === selectedServerId,
   );
+  const profileEditorServer = servers.find(
+    (server) => server.id === profileEditor?.serverId,
+  );
+
+  function saveProfile(data: string) {
+    if (!profileEditor) return;
+
+    const profile: DtoProfile = {
+      data,
+      hash: profileEditorServer?.profile?.hash ?? "",
+      updated_at: new Date().toISOString(),
+    };
+
+    setServers((current) =>
+      current.map((server) =>
+        server.id === profileEditor.serverId ? { ...server, profile } : server,
+      ),
+    );
+    setProfileEditor(null);
+  }
 
   return (
     <main
@@ -154,9 +102,27 @@ export default function Home() {
                 className="rounded-2xl border border-slate-200 bg-slate-50/65 p-4 sm:p-5"
               >
                 {selectedServer.profile ? (
-                  <ProfileCard server={selectedServer} />
+                  <ProfileCard
+                    isAdmin={user.is_admin}
+                    onEdit={() =>
+                      setProfileEditor({
+                        serverId: selectedServer.id,
+                        mode: "edit",
+                      })
+                    }
+                    server={selectedServer}
+                  />
                 ) : (
-                  <NoProfileCard server={selectedServer} />
+                  <NoProfileCard
+                    isAdmin={user.is_admin}
+                    onAdd={() =>
+                      setProfileEditor({
+                        serverId: selectedServer.id,
+                        mode: "add",
+                      })
+                    }
+                    server={selectedServer}
+                  />
                 )}
               </section>
               <section aria-labelledby="devices-heading" className="mt-8">
@@ -232,6 +198,17 @@ export default function Home() {
                 </span>
               </footer>
             </>
+          )}
+          {user.is_admin && profileEditor && profileEditorServer && (
+            <ProfileEditorDialog
+              key={`${profileEditor.serverId}-${profileEditor.mode}`}
+              initialData={profileEditorServer.profile?.data ?? ""}
+              mode={profileEditor.mode}
+              onClose={() => setProfileEditor(null)}
+              onSave={saveProfile}
+              open
+              serverName={profileEditorServer.name}
+            />
           )}
         </div>
       </section>

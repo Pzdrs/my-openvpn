@@ -38,6 +38,7 @@ export type DtoServer = {
 export type DtoUser = {
     email: string;
     id: string;
+    is_admin: boolean;
     name: string;
     picture: string;
 };

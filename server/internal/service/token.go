@@ -15,6 +15,7 @@ type TokenClaims struct {
 	Email   string `json:"email,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Picture string `json:"picture,omitempty"`
+	IsAdmin bool   `json:"is_admin,omitempty"`
 }
 
 type TokenService struct {
@@ -68,6 +69,7 @@ func (s *TokenService) GenerateToken(userID int32, email string, name string, pi
 		Email:     email,
 		Name:      name,
 		Picture:   picture,
+		IsAdmin:   true,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.TokenLifetime)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}

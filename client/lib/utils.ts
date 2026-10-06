@@ -1,3 +1,4 @@
+import { ok } from "@oazapfts/runtime";
 import { finishOAuth, startOAuth } from "./api/client";
 
 export { cn } from "cn";
@@ -10,7 +11,7 @@ export const oauth = {
   authorize: async (location: Location) => {
     try {
       const redirectUri = location.href.split("?", 1)[0];
-      const { url } = await startOAuth({ redirect_uri: redirectUri });
+      const { url } = await ok(startOAuth({ redirect_uri: redirectUri }));
       window.location.href = url;
       return true;
     } catch (error) {

@@ -41,5 +41,6 @@ func (c *UserController) HandleMe(w http.ResponseWriter, r *http.Request) {
 		Email:   claims.Email,
 		Name:    claims.Name,
 		Picture: claims.Picture,
+		IsAdmin: claims.IsAdmin,
 	})
 }

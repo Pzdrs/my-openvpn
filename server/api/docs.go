@@ -234,6 +234,7 @@ const docTemplate = `{
             "required": [
                 "email",
                 "id",
+                "is_admin",
                 "name",
                 "picture"
             ],
@@ -243,6 +244,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "is_admin": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

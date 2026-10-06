@@ -1,10 +1,12 @@
 import { downloadServerProfile, DtoServer } from "@/lib/api/client";
-import { Check, Download, FileKey2 } from "lucide-react";
+import { Check, Download, FileKey2, Pencil } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 
 interface Props {
   server: DtoServer;
+  isAdmin: boolean;
+  onEdit: () => void;
 }
 
 type ToggleProps = {
@@ -37,7 +39,7 @@ function Toggle({ checked, onCheckedChange, label, description }: ToggleProps) {
   );
 }
 
-export default function ProfileCard({ server }: Props) {
+export default function ProfileCard({ server, isAdmin, onEdit }: Props) {
   const [preferences, setPreferences] = useState<
     Record<string, { autoConnect: boolean; splitTunnel: boolean }>
   >({});
@@ -102,9 +104,16 @@ export default function ProfileCard({ server }: Props) {
             </p>
           </div>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100">
-          <Check className="size-3" strokeWidth={3} /> Active
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100">
+            <Check className="size-3" strokeWidth={3} /> Active
+          </span>
+          {isAdmin && (
+            <Button onClick={onEdit} size="sm" type="button" variant="outline">
+              <Pencil className="size-3.5" /> Edit profile
+            </Button>
+          )}
+        </div>
       </div>
       <div className="mt-5 border-t border-slate-200 pt-2">
         <Toggle
