@@ -1,6 +1,8 @@
 package config
 
 import (
+	"slices"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5"
 )
@@ -28,5 +30,13 @@ func DatabaseConfigStructLevelValidation(sl validator.StructLevel) {
 		if _, err := pgx.ParseConfig(cfg.URL); err != nil {
 			sl.ReportError(cfg.URL, "url", "URL", "invalid_postgres_url", err.Error())
 		}
+	}
+}
+
+func OIDCConfigStructLevelValidation(sl validator.StructLevel) {
+	cfg := sl.Current().Interface().(OIDCConfig)
+
+	if !slices.Contains(cfg.Scopes, "openid") {
+		cfg.Scopes = append(cfg.Scopes, "openid")
 	}
 }

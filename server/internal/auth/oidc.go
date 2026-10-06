@@ -24,7 +24,7 @@ func NewOIDCProvider(ctx context.Context, cfg config.OIDCConfig) (*OIDCProvider,
 	oauth2Cfg := oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
-		Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail},
+		Scopes:       cfg.Scopes,
 		Endpoint:     provider.Endpoint(),
 	}
 

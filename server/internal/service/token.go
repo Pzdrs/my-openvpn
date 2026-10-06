@@ -63,13 +63,13 @@ func (s *TokenService) ValidateToken(tokenString string) (*TokenClaims, error) {
 	return claims, nil
 }
 
-func (s *TokenService) GenerateToken(userID int32, email string, name string, picture string) (string, error) {
+func (s *TokenService) GenerateToken(userID int32, email string, name string, picture string, admin bool) (string, error) {
 	claims := &TokenClaims{
 		Subject:   strconv.Itoa(int(userID)),
 		Email:     email,
 		Name:      name,
 		Picture:   picture,
-		IsAdmin:   true,
+		IsAdmin:   admin,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.TokenLifetime)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}

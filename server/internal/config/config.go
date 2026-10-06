@@ -22,12 +22,14 @@ type DatabaseConfig struct {
 }
 
 type OIDCConfig struct {
-	ClientID     string
-	ClientSecret string
-	IssuerURL    string
+	ClientID     string `validate:"required"`
+	ClientSecret string `validate:"required"`
+	IssuerURL    string `validate:"required,url"`
+	Scopes	   []string
+	RolesClaim    string `validate:"required"`
 }
 
 type JWTConfig struct {
-	SecretKey     string
+	SecretKey     string `validate:"required"`
 	TokenLifetime string
 }

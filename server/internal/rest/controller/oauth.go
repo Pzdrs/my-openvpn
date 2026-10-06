@@ -2,10 +2,12 @@ package controller
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"golang.org/x/oauth2"
 	"pycrs.cz/openvpn-client-zone/internal/auth"
@@ -101,26 +103,64 @@ func (c *OAuthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	}
 	c.logger.DebugContext(ctx, "OAuth callback: ID token verified")
 
-	var claims struct {
+	var standardClaims struct {
 		Subject string `json:"sub"`
 		Email   string `json:"email"`
 		Name    string `json:"name"`
 		Picture string `json:"picture"`
 	}
 
-	if err := idToken.Claims(&claims); err != nil {
-		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to parse claims")))
+	if err := idToken.Claims(&standardClaims); err != nil {
+		problem.Write(w, problem.NewInternalServerError(
+			r,
+			errors.New("failed to parse claims"),
+		))
 		return
 	}
 
-	user, err := c.userService.FindOrCreateUser(ctx, claims.Subject)
-	if err != nil {
-		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to get or create user")))
+	var rawClaims map[string]json.RawMessage
+	if err := idToken.Claims(&rawClaims); err != nil {
+		problem.Write(w, problem.NewInternalServerError(
+			r,
+			errors.New("failed to parse claims"),
+		))
 		return
 	}
+
+	var roles []string
+
+	if rolesClaim := c.oidcProvider.Config.RolesClaim; rolesClaim != "" {
+		if raw, ok := rawClaims[rolesClaim]; ok {
+			if err := json.Unmarshal(raw, &roles); err != nil {
+				problem.Write(w, problem.NewInternalServerError(
+					r,
+					errors.New("failed to parse roles claim"),
+				))
+				return
+			}
+		}
+	}
+
+	isAdmin := slices.Contains(roles, "admin")
+
+	user, err := c.userService.FindOrCreateUser(ctx, standardClaims.Subject)
+	if err != nil {
+		problem.Write(w, problem.NewInternalServerError(
+			r,
+			errors.New("failed to get or create user"),
+		))
+		return
+	}
+
 	c.logger.DebugContext(ctx, "OAuth callback: user ready")
 
-	token, err := c.tokenService.GenerateToken(user.ID, claims.Email, claims.Name, claims.Picture)
+	token, err := c.tokenService.GenerateToken(
+		user.ID,
+		standardClaims.Email,
+		standardClaims.Name,
+		standardClaims.Picture,
+		isAdmin,
+	)
 	if err != nil {
 		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to generate token")))
 		return

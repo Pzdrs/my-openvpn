@@ -44,11 +44,11 @@ func InitConfig() (config.Configuration, error) {
 func newViper() *viper.Viper {
 	v := viper.NewWithOptions(viper.ExperimentalBindStruct())
 
-	v.SetConfigName("client-zone")
-	v.SetEnvPrefix("CLIENT_ZONE")
+	v.SetConfigName("my-openvpn")
+	v.SetEnvPrefix("MY_OPENVPN")
 
 	v.AddConfigPath(".")
-	v.AddConfigPath("/etc/client-zone")
+	v.AddConfigPath("/etc/my-openvpn")
 
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -61,4 +61,5 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("database.port", 5432)
 	v.SetDefault("jwt.tokenLifetime", "60m")
+	v.SetDefault("oidc.scopes", []string{"openid", "profile", "email"})
 }
