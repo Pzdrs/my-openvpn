@@ -33,10 +33,8 @@ func DatabaseConfigStructLevelValidation(sl validator.StructLevel) {
 	}
 }
 
-func OIDCConfigStructLevelValidation(sl validator.StructLevel) {
-	cfg := sl.Current().Interface().(OIDCConfig)
-
-	if !slices.Contains(cfg.Scopes, "openid") {
+func EnsureOpenIDScope(cfg *OIDCConfig) {
+	if cfg != nil && !slices.Contains(cfg.Scopes, "openid") {
 		cfg.Scopes = append(cfg.Scopes, "openid")
 	}
 }

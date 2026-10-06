@@ -28,6 +28,7 @@ func InitConfig() (config.Configuration, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return config.Configuration{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+	config.EnsureOpenIDScope(&cfg.OIDC)
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	validate.RegisterStructValidation(
