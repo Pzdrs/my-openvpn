@@ -6,10 +6,6 @@ import (
 	"pycrs.cz/openvpn-client-zone/internal/model"
 )
 
-type ServersResponse struct {
-	Servers []Server `json:"servers"`
-}
-
 type Server struct {
 	ID          int32    `json:"id" validate:"required"`
 	Name        string   `json:"name" validate:"required"`
@@ -21,6 +17,10 @@ type Profile struct {
 	Data      string    `json:"data" validate:"required"`
 	Hash      string    `json:"hash" validate:"required"`
 	UpdatedAt time.Time `json:"updated_at" validate:"required"`
+}
+
+type UpdateProfileRequest struct {
+	ProfileData string `json:"profile_data" validate:"required"`
 }
 
 func ServersModelToDTO(servers []model.Server) []Server {

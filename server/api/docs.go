@@ -132,6 +132,36 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Update server profile",
+                "operationId": "UpdateServerProfile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Server ID",
+                        "name": "serverId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Profile data",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
             }
         },
         "/users/me": {
@@ -226,6 +256,17 @@ const docTemplate = `{
                 },
                 "profile": {
                     "$ref": "#/definitions/dto.Profile"
+                }
+            }
+        },
+        "dto.UpdateProfileRequest": {
+            "type": "object",
+            "required": [
+                "profile_data"
+            ],
+            "properties": {
+                "profile_data": {
+                    "type": "string"
                 }
             }
         },

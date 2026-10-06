@@ -32,5 +32,6 @@ func addRoutes(
 	r.With(RequireAuthenticated).Route("/servers", func(r chi.Router) {
 		r.Get("/", serverController.HandleUserServers)
 		r.Get("/{serverID}/profile", serverController.HandleDownloadProfile)
+		r.Post("/{serverID}/profile", serverController.HandleUpdateProfile)
 	})
 }

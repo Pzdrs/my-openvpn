@@ -2,7 +2,9 @@ package controller
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -107,4 +109,28 @@ func (c *ServerController) HandleDownloadProfile(w http.ResponseWriter, r *http.
 	w.Write([]byte(profile.Data))
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// HandleUpdateProfile handles the request to update a server profile.
+//
+//	@Summary	Update server profile
+//	@Id			UpdateServerProfile
+//	@Tags		servers
+//	@Param		serverId	path	int							true	"Server ID"
+//	@Param		profile		body	dto.UpdateProfileRequest	true	"Profile data"
+//	@Success	204
+//	@Router		/servers/{serverId}/profile [post]
+func (c *ServerController) HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	req, ok := utils.DecodeValidate[dto.UpdateProfileRequest](w, r)
+	if !ok {
+		return
+	}
+	
+	profileData, err := base64.StdEncoding.DecodeString(req.ProfileData)
+	if err != nil {
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("Invalid profile data")))
+		return
+	}
+
+	fmt.Println(string(profileData))
 }

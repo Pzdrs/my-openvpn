@@ -4,10 +4,17 @@ import Header from "@/components/Header";
 import NoProfileCard from "@/components/no-profile-card";
 import NoServersCard from "@/components/no-servers-card";
 import ProfileCard from "@/components/profile-card";
-import ProfileEditorDialog, { ProfileEditorState } from "@/components/modal/profile-editor-dialog";
+import ProfileEditorDialog, {
+  ProfileEditorState,
+} from "@/components/modal/profile-editor-dialog";
 import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
-import { DtoProfile, DtoServer, getUserServers } from "@/lib/api/client";
+import {
+  DtoProfile,
+  DtoServer,
+  getUserServers,
+  updateServerProfile,
+} from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/context";
 import { ok } from "@oazapfts/runtime";
 import { ShieldCheck } from "lucide-react";
@@ -49,18 +56,30 @@ export default function Home() {
   function saveProfile(data: string) {
     if (!profileEditor) return;
 
-    const profile: DtoProfile = {
-      data,
-      hash: profileEditorServer?.profile?.hash ?? "",
-      updated_at: new Date().toISOString(),
-    };
+    ok(
+      updateServerProfile(profileEditor.serverId, {
+        profile_data: btoa(data),
+      }),
+    )
+      .then(() => {
+        const profile: DtoProfile = {
+          data,
+          hash: profileEditorServer?.profile?.hash ?? "",
+          updated_at: new Date().toISOString(),
+        };
 
-    setServers((current) =>
-      current.map((server) =>
-        server.id === profileEditor.serverId ? { ...server, profile } : server,
-      ),
-    );
-    setProfileEditor(null);
+        setServers((current) =>
+          current.map((server) =>
+            server.id === profileEditor.serverId
+              ? { ...server, profile }
+              : server,
+          ),
+        );
+        setProfileEditor(null);
+      })
+      .catch((error) => {
+        console.error("Error updating profile:", error);
+      });
   }
 
   return (

@@ -50,6 +50,13 @@ definitions:
     - id
     - name
     type: object
+  dto.UpdateProfileRequest:
+    properties:
+      profile_data:
+        type: string
+    required:
+    - profile_data
+    type: object
   dto.User:
     properties:
       email:
@@ -149,6 +156,26 @@ paths:
           schema:
             type: file
       summary: Download server profile
+      tags:
+      - servers
+    post:
+      operationId: UpdateServerProfile
+      parameters:
+      - description: Server ID
+        in: path
+        name: serverId
+        required: true
+        type: integer
+      - description: Profile data
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProfileRequest'
+      responses:
+        "204":
+          description: No Content
+      summary: Update server profile
       tags:
       - servers
   /users/me:

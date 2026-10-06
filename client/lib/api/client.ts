@@ -35,6 +35,9 @@ export type DtoServer = {
     name: string;
     profile?: DtoProfile;
 };
+export type DtoUpdateProfileRequest = {
+    profile_data: string;
+};
 export type DtoUser = {
     email: string;
     id: string;
@@ -98,6 +101,16 @@ export function downloadServerProfile(serverId: number, opts?: Oazapfts.RequestO
     }>(`/servers/${encodeURIComponent(serverId)}/profile`, {
         ...opts
     });
+}
+/**
+ * Update server profile
+ */
+export function updateServerProfile(serverId: number, dtoUpdateProfileRequest: DtoUpdateProfileRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchText(`/servers/${encodeURIComponent(serverId)}/profile`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: dtoUpdateProfileRequest
+    }));
 }
 /**
  * Get authenticated user info
