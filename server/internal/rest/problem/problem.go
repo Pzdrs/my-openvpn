@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
-
-	"pycrs.cz/openvpn-client-zone/internal/utils"
 )
 
 type ProblemDetails struct {
@@ -50,34 +47,6 @@ func New(r *http.Request, status int, title, detail, problemType string) Problem
 		Instance: r.URL.Path,
 	}
 }
-
-func NewInternalServerError(r *http.Request, err error) ProblemDetails {
-	return New(
-		r, http.StatusInternalServerError,
-		"Internal Server Error",
-		utils.FirstUpper(strings.TrimSpace(err.Error())),
-		"internal-server-error",
-	)
-}
-
-func NewBadRequest(r *http.Request, err error) ProblemDetails {
-	return New(
-		r, http.StatusBadRequest,
-		"Bad Request",
-		utils.FirstUpper(strings.TrimSpace(err.Error())),
-		"bad-request",
-	)
-}
-
-func NewNotFound(r *http.Request, err error) ProblemDetails {
-	return New(
-		r, http.StatusNotFound,
-		"Not Found",
-		utils.FirstUpper(strings.TrimSpace(err.Error())),
-		"not-found",
-	)
-}
-
 func Write(w http.ResponseWriter, p Problem) error {
 
 	w.Header().Set("Content-Type", "application/problem+json")

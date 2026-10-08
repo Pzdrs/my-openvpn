@@ -133,6 +133,17 @@ func (c *ServerController) HandleDownloadProfile(w http.ResponseWriter, r *http.
 //	@Success	200			{object}	dto.Profile
 //	@Router		/servers/{serverId}/profile [post]
 func (c *ServerController) HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	claims, ok := service.GetTokenClaims(r.Context())
+	if !ok {
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to retrieve token claims")))
+		return
+	}
+
+	if !claims.IsAdmin {
+		problem.Write(w, problem.NewForbidden(r, errors.New("user is not authorized to create or update server profiles")))
+		return
+	}
+
 	req, ok := utils.DecodeValidate[dto.UpdateProfileRequest](w, r)
 	if !ok {
 		return
@@ -216,6 +227,17 @@ func (c *ServerController) HandleGetLastProfileDownload(w http.ResponseWriter, r
 //	@Success	204
 //	@Router		/servers/{serverId}/profile [delete]
 func (c *ServerController) HandleDeleteServerProfile(w http.ResponseWriter, r *http.Request) {
+	claims, ok := service.GetTokenClaims(r.Context())
+	if !ok {
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to retrieve token claims")))
+		return
+	}
+
+	if !claims.IsAdmin {
+		problem.Write(w, problem.NewForbidden(r, errors.New("user is not authorized to delete server profiles")))
+		return
+	}
+
 	serverID, err := strconv.ParseInt(chi.URLParam(r, "serverID"), 10, 32)
 	if err != nil {
 		problem.Write(w, problem.NewBadRequest(r, errors.New("Invalid server ID")))
