@@ -38,6 +38,11 @@ export type DtoServer = {
 export type DtoUpdateProfileRequest = {
     profile_data: string;
 };
+export type DtoLastProfileDownloadResponse = {
+    exists: boolean;
+    last_downloaded_at?: string;
+    last_downloaded_hash?: string;
+};
 export type DtoUser = {
     email: string;
     id: string;
@@ -106,11 +111,34 @@ export function downloadServerProfile(serverId: number, opts?: Oazapfts.RequestO
  * Update server profile
  */
 export function updateServerProfile(serverId: number, dtoUpdateProfileRequest: DtoUpdateProfileRequest, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.fetchText(`/servers/${encodeURIComponent(serverId)}/profile`, oazapfts.json({
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: DtoProfile;
+    }>(`/servers/${encodeURIComponent(serverId)}/profile`, oazapfts.json({
         ...opts,
         method: "POST",
         body: dtoUpdateProfileRequest
     }));
+}
+/**
+ * Delete server profile
+ */
+export function deleteServerProfile(serverId: number, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchText(`/servers/${encodeURIComponent(serverId)}/profile`, {
+        ...opts,
+        method: "DELETE"
+    });
+}
+/**
+ * Get last profile download information
+ */
+export function getLastProfileDownload(serverId: number, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: DtoLastProfileDownloadResponse;
+    }>(`/servers/${encodeURIComponent(serverId)}/profile/last-download`, {
+        ...opts
+    });
 }
 /**
  * Get authenticated user info

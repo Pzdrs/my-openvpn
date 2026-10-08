@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -17,12 +17,14 @@ import (
 )
 
 type ServerController struct {
-	s *service.ServerService
+	logger *slog.Logger
+	s      *service.ServerService
 }
 
-func NewServerController(s *service.ServerService) *ServerController {
+func NewServerController(logger *slog.Logger, s *service.ServerService) *ServerController {
 	return &ServerController{
-		s: s,
+		logger: logger,
+		s:      s,
 	}
 }
 
@@ -97,6 +99,16 @@ func (c *ServerController) HandleDownloadProfile(w http.ResponseWriter, r *http.
 		return
 	}
 
+	err = c.s.RecordProfileDownload(r.Context(), 1, int32(serverID), profile.Hash)
+	if err != nil {
+		problem.Write(
+			w, problem.NewInternalServerError(r, err),
+		)
+		return
+	}
+
+	c.logger.InfoContext(r.Context(), "Recording profile download", "user_id", 1, "server_id", serverID, "hash", profile.Hash)
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Content-Disposition", "attachment; filename=profile.ovpn")
 	w.Header().Set("Content-Length", strconv.Itoa(len(profile.Data)))
@@ -116,21 +128,105 @@ func (c *ServerController) HandleDownloadProfile(w http.ResponseWriter, r *http.
 //	@Summary	Update server profile
 //	@Id			UpdateServerProfile
 //	@Tags		servers
-//	@Param		serverId	path	int							true	"Server ID"
-//	@Param		profile		body	dto.UpdateProfileRequest	true	"Profile data"
-//	@Success	204
+//	@Param		serverId	path		int							true	"Server ID"
+//	@Param		profile		body		dto.UpdateProfileRequest	true	"Profile data"
+//	@Success	200			{object}	dto.Profile
 //	@Router		/servers/{serverId}/profile [post]
 func (c *ServerController) HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	req, ok := utils.DecodeValidate[dto.UpdateProfileRequest](w, r)
 	if !ok {
 		return
 	}
-	
+
+	serverID, err := strconv.ParseInt(chi.URLParam(r, "serverID"), 10, 32)
+	if err != nil {
+		problem.Write(w, problem.NewBadRequest(r, errors.New("Invalid server ID")))
+		return
+	}
+
 	profileData, err := base64.StdEncoding.DecodeString(req.ProfileData)
 	if err != nil {
 		problem.Write(w, problem.NewInternalServerError(r, errors.New("Invalid profile data")))
 		return
 	}
 
-	fmt.Println(string(profileData))
+	profile, err := c.s.UpdateServerProfile(r.Context(), int32(serverID), string(profileData))
+	if err != nil {
+		problem.Write(w, problem.NewInternalServerError(r, err))
+		return
+	}
+
+	utils.Encode(w, r, http.StatusOK, dto.ProfileModelToDTO(profile))
+}
+
+// HandleGetLastProfileDownload handles the request to get the last profile download information for a server and user.
+//
+//	@Summary	Get last profile download information
+//	@Id			GetLastProfileDownload
+//	@Tags		servers
+//	@Param		serverId	path		int	true	"Server ID"
+//	@Success	200			{object}	dto.LastProfileDownloadResponse
+//	@Router		/servers/{serverId}/profile/last-download [get]
+func (c *ServerController) HandleGetLastProfileDownload(w http.ResponseWriter, r *http.Request) {
+	serverID, err := strconv.ParseInt(chi.URLParam(r, "serverID"), 10, 32)
+	if err != nil {
+		problem.Write(w, problem.NewBadRequest(r, errors.New("Invalid server ID")))
+		return
+	}
+
+	claims, ok := service.GetTokenClaims(r.Context())
+	if !ok {
+		problem.Write(
+			w, problem.NewInternalServerError(r, errors.New("failed to retrieve token claims")),
+		)
+		return
+	}
+
+	userID, err := strconv.ParseInt(claims.Subject, 10, 32)
+	if err != nil {
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to parse user ID")))
+		return
+	}
+
+	lastDownload, err := c.s.GetLastProfileDownload(r.Context(), int32(userID), int32(serverID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.Encode(w, r, http.StatusOK, dto.LastProfileDownloadResponse{
+				Exists: false,
+			})
+			return
+		}
+		problem.Write(w, problem.NewInternalServerError(r, err))
+		return
+	}
+
+	utils.Encode(w, r, http.StatusOK, dto.LastProfileDownloadResponse{
+		Exists:             true,
+		LastDownloadedAt:   &lastDownload.LastDownloadedAt,
+		LastDownloadedHash: &lastDownload.DownloadedProfileHash,
+	})
+}
+
+// HandleDeleteServerProfiles handles the request to delete a server's profile.
+//
+//	@Summary	Delete server profile
+//	@Id			DeleteServerProfile
+//	@Tags		servers
+//	@Param		serverId	path	int	true	"Server ID"
+//	@Success	204
+//	@Router		/servers/{serverId}/profile [delete]
+func (c *ServerController) HandleDeleteServerProfile(w http.ResponseWriter, r *http.Request) {
+	serverID, err := strconv.ParseInt(chi.URLParam(r, "serverID"), 10, 32)
+	if err != nil {
+		problem.Write(w, problem.NewBadRequest(r, errors.New("Invalid server ID")))
+		return
+	}
+
+	err = c.s.DeleteServerProfiles(r.Context(), int32(serverID))
+	if err != nil {
+		problem.Write(w, problem.NewInternalServerError(r, err))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

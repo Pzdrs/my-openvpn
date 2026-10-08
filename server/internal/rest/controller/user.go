@@ -22,11 +22,12 @@ func NewUserController(userService *service.UserService) *UserController {
 
 // HandleMe handles the request to retrieve the authenticated user's information.
 //
-//	@Summary	Get authenticated user info
-//	@Id			GetMe
-//	@Tags		user
-//	@Success	200	{object}	dto.User
-//	@Router		/users/me [get]
+//	@Summary		Get authenticated user info
+//	@Id				GetMe
+//	@Tags			user
+//	@Description	Get the authenticated user's information.
+//	@Success		200	{object}	dto.User
+//	@Router			/users/me [get]
 func (c *UserController) HandleMe(w http.ResponseWriter, r *http.Request) {
 	claims, ok := service.GetTokenClaims(r.Context())
 	if !ok {

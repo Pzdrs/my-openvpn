@@ -1,16 +1,16 @@
 "use client";
 
 import Header from "@/components/Header";
-import NoProfileCard from "@/components/no-profile-card";
-import NoServersCard from "@/components/no-servers-card";
-import ProfileCard from "@/components/profile-card";
 import ProfileEditorDialog, {
   ProfileEditorState,
 } from "@/components/modal/profile-editor-dialog";
+import NoProfileCard from "@/components/no-profile-card";
+import NoServersCard from "@/components/no-servers-card";
+import ProfileCard from "@/components/profile-card";
 import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
 import {
-  DtoProfile,
+  deleteServerProfile,
   DtoServer,
   getUserServers,
   updateServerProfile,
@@ -32,6 +32,12 @@ export default function Home() {
     async function fetchServers() {
       ok(getUserServers())
         .then((response) => {
+          response.forEach((server) => {
+            if (server.profile) {
+              server.profile.data = atob(server.profile.data);
+            }
+          });
+
           setServers(response);
           if (response.length > 0) {
             setSelectedServerId(response[0].id);
@@ -61,12 +67,8 @@ export default function Home() {
         profile_data: btoa(data),
       }),
     )
-      .then(() => {
-        const profile: DtoProfile = {
-          data,
-          hash: profileEditorServer?.profile?.hash ?? "",
-          updated_at: new Date().toISOString(),
-        };
+      .then((profile) => {
+        profile.data = atob(profile.data);
 
         setServers((current) =>
           current.map((server) =>
@@ -123,12 +125,41 @@ export default function Home() {
                 {selectedServer.profile ? (
                   <ProfileCard
                     isAdmin={user.is_admin}
+                    onDownloaded={() =>
+                      setServers((current) =>
+                        current.map((server) =>
+                          server.id === selectedServer.id && server.profile
+                            ? {
+                                ...server,
+                                profile: {
+                                  ...server.profile,
+                                  last_downloaded_at: new Date().toISOString(),
+                                },
+                              }
+                            : server,
+                        ),
+                      )
+                    }
                     onEdit={() =>
                       setProfileEditor({
                         serverId: selectedServer.id,
                         mode: "edit",
                       })
                     }
+                    onDelete={() => {
+                      deleteServerProfile(selectedServer.id).then(() => {
+                        setServers((current) =>
+                          current.map((server) =>
+                            server.id === selectedServer.id && server.profile
+                              ? {
+                                  ...server,
+                                  profile: undefined,
+                                }
+                              : server,
+                          ),
+                        );
+                      });
+                    }}
                     server={selectedServer}
                   />
                 ) : (

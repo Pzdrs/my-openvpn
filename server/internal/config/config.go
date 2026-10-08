@@ -25,8 +25,8 @@ type OIDCConfig struct {
 	ClientID     string `validate:"required"`
 	ClientSecret string `validate:"required"`
 	IssuerURL    string `validate:"required,url"`
-	Scopes	   []string
-	RolesClaim    string `validate:"required"`
+	Scopes       []string
+	RolesClaim   string `validate:"required"`
 }
 
 type JWTConfig struct {

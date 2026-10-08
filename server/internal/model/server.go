@@ -18,3 +18,10 @@ type Profile struct {
 	UpdatedAt time.Time
 	CreatedAt time.Time
 }
+
+type LastProfileDownload struct {
+	UserID                int32
+	ServerID              int32
+	DownloadedProfileHash string
+	LastDownloadedAt      time.Time
+}

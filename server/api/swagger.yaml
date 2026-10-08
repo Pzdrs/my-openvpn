@@ -1,5 +1,16 @@
 basePath: /api/v1
 definitions:
+  dto.LastProfileDownloadResponse:
+    properties:
+      exists:
+        type: boolean
+      last_downloaded_at:
+        type: string
+      last_downloaded_hash:
+        type: string
+    required:
+    - exists
+    type: object
   dto.OAuthAuthorizeRequest:
     properties:
       redirect_uri:
@@ -140,6 +151,20 @@ paths:
       tags:
       - servers
   /servers/{serverId}/profile:
+    delete:
+      operationId: DeleteServerProfile
+      parameters:
+      - description: Server ID
+        in: path
+        name: serverId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      summary: Delete server profile
+      tags:
+      - servers
     get:
       operationId: DownloadServerProfile
       parameters:
@@ -173,13 +198,33 @@ paths:
         schema:
           $ref: '#/definitions/dto.UpdateProfileRequest'
       responses:
-        "204":
-          description: No Content
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Profile'
       summary: Update server profile
+      tags:
+      - servers
+  /servers/{serverId}/profile/last-download:
+    get:
+      operationId: GetLastProfileDownload
+      parameters:
+      - description: Server ID
+        in: path
+        name: serverId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LastProfileDownloadResponse'
+      summary: Get last profile download information
       tags:
       - servers
   /users/me:
     get:
+      description: Get the authenticated user's information.
       operationId: GetMe
       responses:
         "200":

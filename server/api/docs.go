@@ -158,14 +158,65 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Profile"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Delete server profile",
+                "operationId": "DeleteServerProfile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Server ID",
+                        "name": "serverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
                     "204": {
                         "description": "No Content"
                     }
                 }
             }
         },
+        "/servers/{serverId}/profile/last-download": {
+            "get": {
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get last profile download information",
+                "operationId": "GetLastProfileDownload",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Server ID",
+                        "name": "serverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LastProfileDownloadResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
+                "description": "Get the authenticated user's information.",
                 "tags": [
                     "user"
                 ],
@@ -183,6 +234,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.LastProfileDownloadResponse": {
+            "type": "object",
+            "required": [
+                "exists"
+            ],
+            "properties": {
+                "exists": {
+                    "type": "boolean"
+                },
+                "last_downloaded_at": {
+                    "type": "string"
+                },
+                "last_downloaded_hash": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.OAuthAuthorizeRequest": {
             "type": "object",
             "required": [

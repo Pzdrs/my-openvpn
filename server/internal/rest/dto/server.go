@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"encoding/base64"
 	"time"
 
 	"pycrs.cz/openvpn-client-zone/internal/model"
@@ -23,6 +24,12 @@ type UpdateProfileRequest struct {
 	ProfileData string `json:"profile_data" validate:"required"`
 }
 
+type LastProfileDownloadResponse struct {
+	Exists             bool       `json:"exists" validate:"required"`
+	LastDownloadedAt   *time.Time `json:"last_downloaded_at,omitempty"`
+	LastDownloadedHash *string    `json:"last_downloaded_hash,omitempty"`
+}
+
 func ServersModelToDTO(servers []model.Server) []Server {
 	serversDTO := make([]Server, len(servers))
 	for i, s := range servers {
@@ -32,26 +39,27 @@ func ServersModelToDTO(servers []model.Server) []Server {
 }
 
 func ServerModelToDTO(s *model.Server) Server {
+	if s == nil {
+		return Server{}
+	}
+
+	var profileDTO *Profile
+	if s.Profile != nil {
+		dto := ProfileModelToDTO(*s.Profile)
+		profileDTO = &dto
+	}
+
 	return Server{
 		ID:          s.ID,
 		Name:        s.Name,
 		Description: s.Description,
-		Profile: func() *Profile {
-			if s.Profile != nil {
-				return &Profile{
-					Data:      s.Profile.Data,
-					Hash:      s.Profile.Hash,
-					UpdatedAt: s.Profile.UpdatedAt,
-				}
-			}
-			return nil
-		}(),
+		Profile:     profileDTO,
 	}
 }
 
-func ProfileModelToDTO(p *model.Profile) Profile {
+func ProfileModelToDTO(p model.Profile) Profile {
 	return Profile{
-		Data:      p.Data,
+		Data:      base64.StdEncoding.EncodeToString([]byte(p.Data)),
 		Hash:      p.Hash,
 		UpdatedAt: p.UpdatedAt,
 	}

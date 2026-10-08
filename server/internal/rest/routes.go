@@ -33,5 +33,7 @@ func addRoutes(
 		r.Get("/", serverController.HandleUserServers)
 		r.Get("/{serverID}/profile", serverController.HandleDownloadProfile)
 		r.Post("/{serverID}/profile", serverController.HandleUpdateProfile)
+		r.Delete("/{serverID}/profile", serverController.HandleDeleteServerProfile)
+		r.Get("/{serverID}/profile/last-download", serverController.HandleGetLastProfileDownload)
 	})
 }

@@ -1,69 +1,93 @@
-import { downloadServerProfile, DtoServer } from "@/lib/api/client";
-import { Check, Download, FileKey2, Pencil } from "lucide-react";
+import {
+  downloadServerProfile,
+  DtoLastProfileDownloadResponse,
+  DtoServer,
+  getLastProfileDownload,
+} from "@/lib/api/client";
+import { Check, Download, FileKey2, Pencil, Trash, TriangleAlert } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ok } from "@oazapfts/runtime";
+import { Spinner } from "./ui/spinner";
 
 interface Props {
   server: DtoServer;
   isAdmin: boolean;
   onEdit: () => void;
+  onDelete: () => void;
+  onDownloaded: () => void;
 }
 
-type ToggleProps = {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  label: string;
-  description: string;
-};
+function StatusBadge({
+  server,
+  lastDownload,
+}: {
+  server: DtoServer;
+  lastDownload: DtoLastProfileDownloadResponse | null;
+}) {
+  if (!lastDownload) return null;
 
-function Toggle({ checked, onCheckedChange, label, description }: ToggleProps) {
-  return (
-    <label className="flex cursor-pointer items-start justify-between gap-5 rounded-xl px-3 py-3 transition-colors hover:bg-slate-50">
-      <span>
-        <span className="block text-sm font-medium text-slate-800">
-          {label}
+  if (lastDownload.exists) {
+    if (lastDownload.last_downloaded_hash === server.profile?.hash) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100">
+          <Check className="size-3" strokeWidth={3} /> Up to date
         </span>
-        <span className="mt-1 block text-xs leading-5 text-slate-500">
-          {description}
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 ring-1 ring-amber-100">
+          <TriangleAlert className="size-3" strokeWidth={3} />
+          New version available
         </span>
+      );
+    }
+  } else {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 ring-1 ring-amber-100">
+        <TriangleAlert className="size-3" strokeWidth={3} />
+        Not downloaded yet
       </span>
-      <input
-        aria-label={label}
-        checked={checked}
-        className="peer sr-only"
-        onChange={(event) => onCheckedChange(event.target.checked)}
-        type="checkbox"
-      />
-      <span className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-slate-200 transition-colors peer-checked:bg-cyan-600 peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-500 peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-4" />
-    </label>
-  );
+    );
+  }
 }
 
-export default function ProfileCard({ server, isAdmin, onEdit }: Props) {
-  const [preferences, setPreferences] = useState<
-    Record<string, { autoConnect: boolean; splitTunnel: boolean }>
-  >({});
+export default function ProfileCard({
+  server,
+  isAdmin,
+  onEdit,
+  onDelete,
+  onDownloaded,
+}: Props) {
+  const [lastDownloadState, setLastDownloadState] = useState<{
+    serverId: number;
+    download: DtoLastProfileDownloadResponse;
+  } | null>(null);
 
-  const currentPreferences = preferences[server.id] ?? {
-    autoConnect: true,
-    splitTunnel: false,
-  };
+  useEffect(() => {
+    let cancelled = false;
 
-  function updatePreference(
-    key: "autoConnect" | "splitTunnel",
-    value: boolean,
-  ) {
-    setPreferences((current) => ({
-      ...current,
-      [server.id]: {
-        ...(current[server.id] ?? {
-          autoConnect: true,
-          splitTunnel: false,
-        }),
-        [key]: value,
-      },
-    }));
-  }
+    ok(getLastProfileDownload(server.id))
+      .then((response) => {
+        if (!cancelled) {
+          setLastDownloadState({ serverId: server.id, download: response });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("Error fetching last profile download:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [server.id]);
+
+  const lastDownload =
+    lastDownloadState?.serverId === server.id
+      ? lastDownloadState.download
+      : null;
 
   function downloadProfile() {
     downloadServerProfile(server.id).then((response) => {
@@ -82,8 +106,23 @@ export default function ProfileCard({ server, isAdmin, onEdit }: Props) {
       a.remove();
 
       URL.revokeObjectURL(url);
+
+      ok(getLastProfileDownload(server.id))
+        .then((response) => {
+          setLastDownloadState({ serverId: server.id, download: response });
+        })
+        .catch((error) => {
+          console.error("Error fetching last profile download:", error);
+        });
+
+      onDownloaded();
     });
   }
+
+  const formatDate = (value?: string | null) =>
+    value ? new Date(value).toLocaleString() : "Not downloaded yet";
+
+  if (!server.profile) return null;
 
   return (
     <>
@@ -105,34 +144,44 @@ export default function ProfileCard({ server, isAdmin, onEdit }: Props) {
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100">
-            <Check className="size-3" strokeWidth={3} /> Active
-          </span>
+          {lastDownload ? (
+            <StatusBadge lastDownload={lastDownload} server={server} />
+          ) : (
+            <Spinner className="size-3" />
+          )}
+
           {isAdmin && (
-            <Button onClick={onEdit} size="sm" type="button" variant="outline">
-              <Pencil className="size-3.5" /> Edit profile
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={onDelete}
+                size="sm"
+                type="button"
+                variant="destructive"
+              >
+                <Trash className="size-3.5" /> Delete profile
+              </Button>
+              <Button
+                onClick={onEdit}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Pencil className="size-3.5" /> Edit profile
+              </Button>
+            </div>
           )}
         </div>
       </div>
-      <div className="mt-5 border-t border-slate-200 pt-2">
-        <Toggle
-          checked={currentPreferences.autoConnect}
-          onCheckedChange={(checked) =>
-            updatePreference("autoConnect", checked)
-          }
-          label="Connect automatically"
-          description="Connect when using an untrusted network."
-        />
-        <Toggle
-          checked={currentPreferences.splitTunnel}
-          onCheckedChange={(checked) =>
-            updatePreference("splitTunnel", checked)
-          }
-          label="Use split tunneling"
-          description="Only route company resources through the VPN."
-        />
-      </div>
+      {lastDownload &&
+        lastDownload.exists &&
+        lastDownload.last_downloaded_hash !== server.profile.hash && (
+          <div className="mt-4 space-y-1 border-t border-slate-200 pt-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            <p>Update issued: {formatDate(server.profile.updated_at)}</p>
+            <p>
+              Last downloaded: {formatDate(lastDownload.last_downloaded_at)}
+            </p>
+          </div>
+        )}
       <Button
         className="mt-3 h-10 w-full rounded-xl bg-slate-900 text-sm shadow-sm hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
         size="lg"
