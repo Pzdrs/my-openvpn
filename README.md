@@ -60,6 +60,13 @@ The local OIDC client should allow `http://localhost:3000/auth/login` as a redir
 
 ![Dashboard](docs/assets/dashboard.png)
 
+## TODO
+
+- Implement PKCE
+- Edit server name and description
+- RBAC for server access (mapping roles to available servers)
+  - Admin role mapping is already done
+
 ### AI Disclosure
 
 The only part of this project that was vibed with AI is the UI. I can't do UI for shit, so the interface, all the Tailwind and CSS stuff is straight up Codexed up. The rest of the project is pure human spaghetti.
