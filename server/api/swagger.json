@@ -95,6 +95,55 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Create a new server",
+                "operationId": "CreateServer",
+                "parameters": [
+                    {
+                        "description": "Server data",
+                        "name": "server",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateServerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Server"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{serverId}": {
+            "delete": {
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Delete a server",
+                "operationId": "DeleteServer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Server ID",
+                        "name": "serverId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
             }
         },
         "/servers/{serverId}/profile": {
@@ -226,6 +275,20 @@
         }
     },
     "definitions": {
+        "dto.CreateServerRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.LastProfileDownloadResponse": {
             "type": "object",
             "required": [

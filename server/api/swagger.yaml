@@ -1,5 +1,14 @@
 basePath: /api/v1
 definitions:
+  dto.CreateServerRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
   dto.LastProfileDownloadResponse:
     properties:
       exists:
@@ -148,6 +157,38 @@ paths:
               $ref: '#/definitions/dto.Server'
             type: array
       summary: Get servers that the user has access to
+      tags:
+      - servers
+    post:
+      operationId: CreateServer
+      parameters:
+      - description: Server data
+        in: body
+        name: server
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateServerRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.Server'
+      summary: Create a new server
+      tags:
+      - servers
+  /servers/{serverId}:
+    delete:
+      operationId: DeleteServer
+      parameters:
+      - description: Server ID
+        in: path
+        name: serverId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      summary: Delete a server
       tags:
       - servers
   /servers/{serverId}/profile:

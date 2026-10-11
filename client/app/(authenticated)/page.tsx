@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import ProfileEditorDialog, {
   ProfileEditorState,
 } from "@/components/modal/profile-editor-dialog";
+import ServerEditorDialog from "@/components/modal/server-editor-dialog";
 import NoProfileCard from "@/components/no-profile-card";
 import NoServersCard from "@/components/no-servers-card";
 import ProfileCard from "@/components/profile-card";
@@ -12,7 +13,10 @@ import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
 import { toast } from "@/components/ui/toast";
 import {
+  createServer,
+  deleteServer,
   deleteServerProfile,
+  DtoCreateServerRequest,
   DtoServer,
   getUserServers,
   updateServerProfile,
@@ -30,6 +34,9 @@ export default function Home() {
   );
   const [profileEditor, setProfileEditor] = useState<ProfileEditorState>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isServerEditorOpen, setIsServerEditorOpen] = useState(false);
+  const [isDeleteServerDialogOpen, setIsDeleteServerDialogOpen] =
+    useState(false);
 
   useEffect(() => {
     async function fetchServers() {
@@ -47,7 +54,12 @@ export default function Home() {
           }
         })
         .catch((error) => {
-          console.error("Error fetching servers:", error);
+          toast.add({
+            type: "error",
+            title: "Failed to fetch servers",
+            description:
+              error.message || "An error occurred while fetching servers.",
+          });
         });
     }
 
@@ -90,7 +102,18 @@ export default function Home() {
         });
       })
       .catch((error) => {
-        console.error("Error updating profile:", error);
+        toast.add({
+          type: "error",
+          title:
+            profileEditor.mode === "add"
+              ? "Failed to add profile"
+              : "Failed to update profile",
+          description:
+            error.message ||
+            `An error occurred while ${
+              profileEditor.mode === "add" ? "adding" : "updating"
+            } the profile.`,
+        });
       });
   }
 
@@ -98,23 +121,86 @@ export default function Home() {
     if (!selectedServer) return;
 
     setIsDeleteDialogOpen(false);
-    deleteServerProfile(selectedServer.id).then(() => {
-      setServers((current) =>
-        current.map((server) =>
-          server.id === selectedServer.id && server.profile
-            ? {
-                ...server,
-                profile: undefined,
-              }
-            : server,
-        ),
-      );
-    });
+    deleteServerProfile(selectedServer.id)
+      .then(() => {
+        setServers((current) =>
+          current.map((server) =>
+            server.id === selectedServer.id && server.profile
+              ? {
+                  ...server,
+                  profile: undefined,
+                }
+              : server,
+          ),
+        );
+      })
+      .catch((error) => {
+        toast.add({
+          type: "error",
+          title: "Failed to delete profile",
+          description:
+            error.message || "An error occurred while deleting the profile.",
+        });
+      });
 
     toast.add({
       type: "success",
       description: "Profile deleted successfully.",
     });
+  }
+
+  function handleAddServer(server: DtoCreateServerRequest) {
+    setIsServerEditorOpen(false);
+    ok(createServer(server))
+      .then((newServer) => {
+        setServers((current) => [...current, newServer]);
+        setSelectedServerId(newServer.id);
+        toast.add({
+          type: "success",
+          description: "Server created successfully.",
+        });
+      })
+      .catch((error) => {
+        toast.add({
+          type: "error",
+          title: "Failed to create server",
+          description:
+            error.message || "An error occurred while creating the server.",
+        });
+      });
+  }
+
+  function handleDeleteServer() {
+    setIsDeleteServerDialogOpen(false);
+    deleteServer(selectedServerId)
+      .then(() => {
+        setServers((current) =>
+          current.filter((server) => server.id !== selectedServerId),
+        );
+       
+        // select the next available server if any, otherwise set to 0
+        const remainingServers = servers.filter(
+          (server) => server.id !== selectedServerId,
+        );
+        if (remainingServers.length > 0) {
+          setSelectedServerId(remainingServers[0].id);
+        } else {
+          setSelectedServerId(0);
+        }
+
+        toast.add({
+          type: "success",
+          description: "Server deleted successfully.",
+        });
+      })
+      .catch((error) => {
+        toast.add({
+          type: "error",
+          title: "Failed to delete server",
+          description:
+            error.message || "An error occurred while deleting the server.",
+        });
+      });
   }
 
   return (
@@ -130,9 +216,11 @@ export default function Home() {
               servers={servers}
               selected={selectedServerId}
               onSelect={setSelectedServerId}
+              onDelete={() => setIsDeleteServerDialogOpen(true)}
+              onAdd={() => setIsServerEditorOpen(true)}
             />
           ) : (
-            <NoServersCard />
+            <NoServersCard onAdd={() => setIsServerEditorOpen(true)} />
           )}
 
           {selectedServer && (
@@ -284,10 +372,22 @@ export default function Home() {
               serverName={profileEditorServer.name}
             />
           )}
+          <ServerEditorDialog
+            onClose={() => setIsServerEditorOpen(false)}
+            onSave={handleAddServer}
+            open={isServerEditorOpen}
+          />
           <ConfirmDeleteDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
             onConfirm={deleteProfile}
+          />
+          <ConfirmDeleteDialog
+            description={`This will delete ${selectedServer?.name ?? "this server"}.`}
+            onConfirm={handleDeleteServer}
+            onOpenChange={setIsDeleteServerDialogOpen}
+            open={isDeleteServerDialogOpen}
+            title="Delete server?"
           />
         </div>
       </section>

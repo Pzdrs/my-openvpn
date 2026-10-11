@@ -35,6 +35,10 @@ export type DtoServer = {
     name: string;
     profile?: DtoProfile;
 };
+export type DtoCreateServerRequest = {
+    description?: string;
+    name: string;
+};
 export type DtoUpdateProfileRequest = {
     profile_data: string;
 };
@@ -94,6 +98,28 @@ export function getUserServers(opts?: Oazapfts.RequestOpts) {
         data: DtoServer[];
     }>("/servers", {
         ...opts
+    });
+}
+/**
+ * Create a new server
+ */
+export function createServer(dtoCreateServerRequest: DtoCreateServerRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 201;
+        data: DtoServer;
+    }>("/servers", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: dtoCreateServerRequest
+    }));
+}
+/**
+ * Delete a server
+ */
+export function deleteServer(serverId: number, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchText(`/servers/${encodeURIComponent(serverId)}`, {
+        ...opts,
+        method: "DELETE"
     });
 }
 /**

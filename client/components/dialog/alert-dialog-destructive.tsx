@@ -16,12 +16,16 @@ interface ConfirmDeleteDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
+  title?: string
+  description?: string
 }
 
 export function ConfirmDeleteDialog({
   open,
   onOpenChange,
   onConfirm,
+  title = "Delete profile?",
+  description = "This will permanently delete this server profile.",
 }: ConfirmDeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -30,9 +34,9 @@ export function ConfirmDeleteDialog({
           <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Delete profile?</AlertDialogTitle>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete this server profile.
+            {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -31,6 +31,9 @@ func addRoutes(
 
 	r.With(RequireAuthenticated).Route("/servers", func(r chi.Router) {
 		r.Get("/", serverController.HandleUserServers)
+		r.Post("/", serverController.HandleCreateServer)
+		r.Delete("/{serverID}", serverController.HandleDeleteServer)
+
 		r.Get("/{serverID}/profile", serverController.HandleDownloadProfile)
 		r.Post("/{serverID}/profile", serverController.HandleUpdateProfile)
 		r.Delete("/{serverID}/profile", serverController.HandleDeleteServerProfile)

@@ -20,6 +20,11 @@ type Profile struct {
 	UpdatedAt time.Time `json:"updated_at" validate:"required"`
 }
 
+type CreateServerRequest struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description,omitempty"`
+}
+
 type UpdateProfileRequest struct {
 	ProfileData string `json:"profile_data" validate:"required"`
 }

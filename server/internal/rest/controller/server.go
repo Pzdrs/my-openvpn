@@ -68,6 +68,27 @@ func (c *ServerController) HandleUserServers(w http.ResponseWriter, r *http.Requ
 	utils.Encode(w, r, http.StatusOK, dto.ServersModelToDTO(serversValue))
 }
 
+// HandleCreateServer handles the request to create a new server.
+//
+//	@Summary	Create a new server
+//	@Id			CreateServer
+//	@Tags		servers
+//	@Param		server	body		dto.CreateServerRequest	true	"Server data"
+//	@Success	201		{object}	dto.Server
+//	@Router		/servers [post]
+func (c *ServerController) HandleCreateServer(w http.ResponseWriter, r *http.Request) {
+}
+
+// HandleDeleteServer handles the request to delete a server.
+//
+//	@Summary	Delete a server
+//	@Id			DeleteServer
+//	@Tags		servers
+//	@Param		serverId	path	int	true	"Server ID"
+//	@Success	204
+//	@Router		/servers/{serverId} [delete]
+func (c *ServerController) HandleDeleteServer(w http.ResponseWriter, r *http.Request) {}
+
 // HandleDownloadProfile handles the request to download a server profile.
 //
 //	@Summary	Download server profile
