@@ -56,6 +56,10 @@ jwt:
 
 The local OIDC client should allow `http://localhost:3000/auth/login` as a redirect URI. The default OpenID scopes are `openid`, `profile`, and `email`; if you override them, the API ensures `openid` remains in the list.
 
+## Screenshots
+
+![Dashboard](docs/assets/dashboard.png)
+
 ### AI Disclosure
 
 The only part of this project that was vibed with AI is the UI. I can't do UI for shit, so the interface, all the Tailwind and CSS stuff is straight up Codexed up. The rest of the project is pure human spaghetti.
