@@ -1,3 +1,11 @@
+-- name: CreateServer :one
+INSERT INTO servers (name, description)
+VALUES ($1, $2)
+RETURNING id, name, description, created_at, updated_at;
+
+-- name: DeleteServer :exec
+DELETE FROM servers WHERE id = $1;
+
 -- name: GerUserServers :many
 SELECT
     s.id,

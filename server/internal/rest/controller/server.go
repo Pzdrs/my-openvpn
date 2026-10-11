@@ -77,6 +77,20 @@ func (c *ServerController) HandleUserServers(w http.ResponseWriter, r *http.Requ
 //	@Success	201		{object}	dto.Server
 //	@Router		/servers [post]
 func (c *ServerController) HandleCreateServer(w http.ResponseWriter, r *http.Request) {
+	req, ok := utils.DecodeValidate[dto.CreateServerRequest](w, r)
+	if !ok {
+		return
+	}
+
+	server, err := c.s.CreateServer(r.Context(), req.Name, req.Description)
+	if err != nil {
+		problem.Write(
+			w, problem.NewInternalServerError(r, err),
+		)
+		return
+	}
+
+	utils.Encode(w, r, http.StatusCreated, dto.ServerModelToDTO(server))
 }
 
 // HandleDeleteServer handles the request to delete a server.
@@ -87,7 +101,32 @@ func (c *ServerController) HandleCreateServer(w http.ResponseWriter, r *http.Req
 //	@Param		serverId	path	int	true	"Server ID"
 //	@Success	204
 //	@Router		/servers/{serverId} [delete]
-func (c *ServerController) HandleDeleteServer(w http.ResponseWriter, r *http.Request) {}
+func (c *ServerController) HandleDeleteServer(w http.ResponseWriter, r *http.Request) {
+	claims, ok := service.GetTokenClaims(r.Context())
+	if !ok {
+		problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to retrieve token claims")))
+		return
+	}
+
+	if !claims.IsAdmin {
+		problem.Write(w, problem.NewForbidden(r, errors.New("user is not authorized to delete servers")))
+		return
+	}
+
+	serverID, err := strconv.ParseInt(chi.URLParam(r, "serverID"), 10, 32)
+	if err != nil {
+		problem.Write(w, problem.NewBadRequest(r, errors.New("Invalid server ID")))
+		return
+	}
+
+	err = c.s.DeleteServer(r.Context(), int32(serverID))
+	if err != nil {
+		problem.Write(w, problem.NewInternalServerError(r, err))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
 
 // HandleDownloadProfile handles the request to download a server profile.
 //

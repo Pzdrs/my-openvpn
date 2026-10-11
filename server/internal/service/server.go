@@ -17,6 +17,14 @@ func NewServerService(r repository.ServerRepository) *ServerService {
 	}
 }
 
+func (s *ServerService) CreateServer(ctx context.Context, name string, description string) (model.Server, error) {
+	return s.r.CreateServer(ctx, name, description)
+}
+
+func (s *ServerService) DeleteServer(ctx context.Context, serverID int32) error {
+	return s.r.DeleteServer(ctx, serverID)
+}
+
 func (s *ServerService) GetUserServers(ctx context.Context, userId int32) ([]*model.Server, error) {
 	servers, err := s.r.GetUserServers(ctx, userId)
 	return servers, err

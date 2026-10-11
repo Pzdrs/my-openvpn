@@ -38,16 +38,12 @@ type LastProfileDownloadResponse struct {
 func ServersModelToDTO(servers []model.Server) []Server {
 	serversDTO := make([]Server, len(servers))
 	for i, s := range servers {
-		serversDTO[i] = ServerModelToDTO(&s)
+		serversDTO[i] = ServerModelToDTO(s)
 	}
 	return serversDTO
 }
 
-func ServerModelToDTO(s *model.Server) Server {
-	if s == nil {
-		return Server{}
-	}
-
+func ServerModelToDTO(s model.Server) Server {
 	var profileDTO *Profile
 	if s.Profile != nil {
 		dto := ProfileModelToDTO(*s.Profile)

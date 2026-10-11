@@ -12,6 +12,8 @@ import (
 )
 
 type ServerRepository interface {
+	CreateServer(ctx context.Context, name string, description string) (model.Server, error)
+	DeleteServer(ctx context.Context, serverID int32) error
 	GetUserServers(ctx context.Context, uid int32) ([]*model.Server, error)
 	GetServerProfile(ctx context.Context, serverID int32) (*model.Profile, error)
 	GetLastProfileDownload(ctx context.Context, userId int32, serverID int32) (model.LastProfileDownload, error)
@@ -28,6 +30,34 @@ func NewServerRepository(q *queries.Queries) ServerRepository {
 	return &postgresServerRepository{
 		q: q,
 	}
+}
+
+func (r *postgresServerRepository) CreateServer(ctx context.Context, name string, description string) (model.Server, error) {
+	var descriptionText pgtype.Text
+	if description != "" {
+		descriptionText = pgtype.Text{
+			String: description,
+			Valid:  true,
+		}
+	} else {
+		descriptionText = pgtype.Text{
+			String: "",
+			Valid:  false,
+		}
+	}
+	row, err := r.q.CreateServer(ctx, queries.CreateServerParams{
+		Name:        name,
+		Description: descriptionText,
+	})
+	if err != nil {
+		return model.Server{}, err
+	}
+
+	return mapServerToModel(row), nil
+}
+
+func (r *postgresServerRepository) DeleteServer(ctx context.Context, serverID int32) error {
+	return r.q.DeleteServer(ctx, serverID)
 }
 
 func (r *postgresServerRepository) GetUserServers(ctx context.Context, uid int32) ([]*model.Server, error) {
@@ -124,6 +154,16 @@ func (r *postgresServerRepository) UpsertLastProfileDownload(ctx context.Context
 
 func (r *postgresServerRepository) DeleteServerProfiles(ctx context.Context, serverID int32) error {
 	return r.q.DeleteServerProfiles(ctx, serverID)
+}
+
+func mapServerToModel(s queries.Server) model.Server {
+	return model.Server{
+		ID:          s.ID,
+		Name:        s.Name,
+		Description: s.Description.String,
+		CreatedAt:   s.CreatedAt.Time,
+		UpdatedAt:   s.UpdatedAt.Time,
+	}
 }
 
 func mapProfileToModel(p queries.Profile) model.Profile {
