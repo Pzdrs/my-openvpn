@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDeleteDialog } from "@/components/dialog/alert-dialog-destructive";
 import Header from "@/components/Header";
 import ProfileEditorDialog, {
   ProfileEditorState,
@@ -9,6 +10,7 @@ import NoServersCard from "@/components/no-servers-card";
 import ProfileCard from "@/components/profile-card";
 import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
+import { toast } from "@/components/ui/toast";
 import {
   deleteServerProfile,
   DtoServer,
@@ -27,6 +29,7 @@ export default function Home() {
     servers.length > 0 ? servers[0].id : 0,
   );
   const [profileEditor, setProfileEditor] = useState<ProfileEditorState>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchServers() {
@@ -78,10 +81,40 @@ export default function Home() {
           ),
         );
         setProfileEditor(null);
+        toast.add({
+          type: "success",
+          description:
+            profileEditor.mode === "add"
+              ? "Profile added successfully."
+              : "Profile updated successfully.",
+        });
       })
       .catch((error) => {
         console.error("Error updating profile:", error);
       });
+  }
+
+  function deleteProfile() {
+    if (!selectedServer) return;
+
+    setIsDeleteDialogOpen(false);
+    deleteServerProfile(selectedServer.id).then(() => {
+      setServers((current) =>
+        current.map((server) =>
+          server.id === selectedServer.id && server.profile
+            ? {
+                ...server,
+                profile: undefined,
+              }
+            : server,
+        ),
+      );
+    });
+
+    toast.add({
+      type: "success",
+      description: "Profile deleted successfully.",
+    });
   }
 
   return (
@@ -125,7 +158,7 @@ export default function Home() {
                 {selectedServer.profile ? (
                   <ProfileCard
                     isAdmin={user.is_admin}
-                    onDownloaded={() =>
+                    onDownloaded={() => {
                       setServers((current) =>
                         current.map((server) =>
                           server.id === selectedServer.id && server.profile
@@ -138,39 +171,30 @@ export default function Home() {
                               }
                             : server,
                         ),
-                      )
-                    }
-                    onEdit={() =>
+                      );
+                      toast.add({
+                        type: "success",
+                        description: "Profile downloaded successfully.",
+                      });
+                    }}
+                    onEdit={() => {
                       setProfileEditor({
                         serverId: selectedServer.id,
                         mode: "edit",
-                      })
-                    }
-                    onDelete={() => {
-                      deleteServerProfile(selectedServer.id).then(() => {
-                        setServers((current) =>
-                          current.map((server) =>
-                            server.id === selectedServer.id && server.profile
-                              ? {
-                                  ...server,
-                                  profile: undefined,
-                                }
-                              : server,
-                          ),
-                        );
                       });
                     }}
+                    onDelete={() => setIsDeleteDialogOpen(true)}
                     server={selectedServer}
                   />
                 ) : (
                   <NoProfileCard
                     isAdmin={user.is_admin}
-                    onAdd={() =>
+                    onAdd={() => {
                       setProfileEditor({
                         serverId: selectedServer.id,
                         mode: "add",
-                      })
-                    }
+                      });
+                    }}
                     server={selectedServer}
                   />
                 )}
@@ -260,6 +284,11 @@ export default function Home() {
               serverName={profileEditorServer.name}
             />
           )}
+          <ConfirmDeleteDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            onConfirm={deleteProfile}
+          />
         </div>
       </section>
     </main>

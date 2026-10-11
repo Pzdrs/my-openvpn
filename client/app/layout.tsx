@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toast";
+import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/lib/auth/context";
 
 export const metadata: Metadata = {
   title: "My OpenVPN",
@@ -21,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>{children}</ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );
