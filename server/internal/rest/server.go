@@ -25,6 +25,7 @@ func NewServer(
 	r.Use(chi_middleware.Logger)
 
 	RequireAuthenticated := middleware.NewRequireAuthenticatedMiddleware(tokenService)
+	RequireAdmin := middleware.NewRequireAdminMiddleware(tokenService)
 
 	authController := controller.NewAuthController()
 	userController := controller.NewUserController(userService)
@@ -39,6 +40,7 @@ func NewServer(
 			oauthController,
 			serverController,
 			RequireAuthenticated,
+			RequireAdmin,
 		)
 	})
 

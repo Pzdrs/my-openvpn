@@ -15,6 +15,7 @@ func addRoutes(
 	serverController *controller.ServerController,
 
 	RequireAuthenticated func(http.Handler) http.Handler,
+	RequireAdmin func(http.Handler) http.Handler,
 ) {
 	r.Route("/auth", func(r chi.Router) {
 		r.With(RequireAuthenticated).Post("/logout", authController.HandleLogout)
@@ -31,12 +32,17 @@ func addRoutes(
 
 	r.With(RequireAuthenticated).Route("/servers", func(r chi.Router) {
 		r.Get("/", serverController.HandleUserServers)
-		r.Post("/", serverController.HandleCreateServer)
-		r.Delete("/{serverID}", serverController.HandleDeleteServer)
-
 		r.Get("/{serverID}/profile", serverController.HandleDownloadProfile)
-		r.Post("/{serverID}/profile", serverController.HandleUpdateProfile)
-		r.Delete("/{serverID}/profile", serverController.HandleDeleteServerProfile)
 		r.Get("/{serverID}/profile/last-download", serverController.HandleGetLastProfileDownload)
+
+		r.With(RequireAdmin).Group(
+			func(r chi.Router) {
+				r.Post("/", serverController.HandleCreateServer)
+				r.Delete("/{serverID}", serverController.HandleDeleteServer)
+
+				r.Post("/{serverID}/profile", serverController.HandleUpdateProfile)
+				r.Delete("/{serverID}/profile", serverController.HandleDeleteServerProfile)
+			},
+		)
 	})
 }

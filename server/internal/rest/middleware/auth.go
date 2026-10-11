@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 
 	"pycrs.cz/openvpn-client-zone/internal/rest/problem"
@@ -37,6 +38,25 @@ func NewRequireAuthenticatedMiddleware(tokenService *service.TokenService) func(
 			ctx := r.Context()
 			ctx = service.WithTokenClaims(ctx, claims)
 			r = r.WithContext(ctx)
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func NewRequireAdminMiddleware(tokenService *service.TokenService) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := service.GetTokenClaims(r.Context())
+			if !ok {
+				problem.Write(w, problem.NewInternalServerError(r, errors.New("failed to retrieve token claims")))
+				return
+			}
+
+			if !claims.IsAdmin {
+				problem.Write(w, problem.NewForbidden(r, errors.New("user is not authorized to access this resource")))
+				return
+			}
 
 			next.ServeHTTP(w, r)
 		})
