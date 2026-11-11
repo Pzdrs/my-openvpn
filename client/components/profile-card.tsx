@@ -132,12 +132,12 @@ export default function ProfileCard({
             <FileKey2 className="size-5" />
           </div>
           <div>
-            <h1
+            <h3
               id="profile-heading"
               className="text-sm font-semibold text-slate-900"
             >
               OpenVPN profile
-            </h1>
+            </h3>
             <p className="mt-1 text-xs leading-5 text-slate-500">
               One profile for your {server.name.toLowerCase()} environment.
             </p>
@@ -153,20 +153,22 @@ export default function ProfileCard({
           {isAdmin && (
             <div className="flex gap-2">
               <Button
+                aria-label="Delete profile"
                 onClick={onDelete}
-                size="sm"
+                size="icon-sm"
                 type="button"
                 variant="destructive"
               >
-                <Trash className="size-3.5" /> Delete profile
+                <Trash className="size-3.5" />
               </Button>
               <Button
+                aria-label="Edit profile"
                 onClick={onEdit}
-                size="sm"
+                size="icon-sm"
                 type="button"
                 variant="outline"
               >
-                <Pencil className="size-3.5" /> Edit profile
+                <Pencil className="size-3.5" />
               </Button>
             </div>
           )}

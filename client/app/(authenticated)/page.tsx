@@ -23,7 +23,6 @@ import {
 } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/context";
 import { ok } from "@oazapfts/runtime";
-import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Home() {
@@ -37,6 +36,8 @@ export default function Home() {
   const [isServerEditorOpen, setIsServerEditorOpen] = useState(false);
   const [isDeleteServerDialogOpen, setIsDeleteServerDialogOpen] =
     useState(false);
+
+  const [isLoadingServers, setIsLoadingServers] = useState(true);
 
   useEffect(() => {
     async function fetchServers() {
@@ -60,6 +61,9 @@ export default function Home() {
             description:
               error.message || "An error occurred while fetching servers.",
           });
+        })
+        .finally(() => {
+          setIsLoadingServers(false);
         });
     }
 
@@ -177,7 +181,7 @@ export default function Home() {
         setServers((current) =>
           current.filter((server) => server.id !== selectedServerId),
         );
-       
+
         // select the next available server if any, otherwise set to 0
         const remainingServers = servers.filter(
           (server) => server.id !== selectedServerId,
@@ -211,38 +215,73 @@ export default function Home() {
       <section className="relative mx-auto w-full max-w-[610px] overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_22px_70px_-28px_rgba(15,23,42,0.24)]">
         <Header />
         <div className="px-6 pb-7 pt-8 sm:px-8 sm:pb-9">
-          {servers.length > 0 ? (
-            <ServerSelector
-              servers={servers}
-              selected={selectedServerId}
-              onSelect={setSelectedServerId}
-              onDelete={() => setIsDeleteServerDialogOpen(true)}
-              onAdd={() => setIsServerEditorOpen(true)}
-            />
+          {isLoadingServers ? (
+            <div aria-busy="true" className="animate-pulse" role="status">
+              <span className="sr-only">Loading servers</span>
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/80">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                    <div className="space-y-2">
+                      <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+                      <div className="h-2.5 w-40 rounded bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                  </div>
+                  <div className="h-7 w-32 rounded-lg bg-slate-200 dark:bg-slate-700" />
+                </div>
+                <div className="mt-4 h-11 w-full rounded-xl bg-slate-200 dark:bg-slate-700" />
+              </div>
+              <div className="mt-10 space-y-10 border-t border-slate-100 pt-8 dark:border-slate-800">
+                <div>
+                  <div className="h-2.5 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="mt-2 h-4 w-36 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="mt-2 h-3 w-64 max-w-full rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/65 p-5 dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3"><div className="size-10 rounded-xl bg-slate-200 dark:bg-slate-700" /><div className="space-y-2"><div className="h-3 w-28 rounded bg-slate-200 dark:bg-slate-700" /><div className="h-2.5 w-44 rounded bg-slate-200 dark:bg-slate-700" /></div></div>
+                      <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <div className="mt-5 h-10 w-full rounded-xl bg-slate-200 dark:bg-slate-700" />
+                  </div>
+                </div>
+                <div>
+                  <div className="h-2.5 w-14 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="mt-2 h-4 w-40 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="mt-2 h-3 w-56 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="mt-3 h-24 rounded-2xl border border-slate-200 bg-slate-50/65 dark:border-slate-700 dark:bg-slate-900/80" />
+                </div>
+                <div className="flex justify-between border-t border-slate-100 pt-5 dark:border-slate-800"><div className="h-2.5 w-28 rounded bg-slate-200 dark:bg-slate-700" /><div className="h-2.5 w-24 rounded bg-slate-200 dark:bg-slate-700" /></div>
+              </div>
+            </div>
+          ) : servers.length > 0 ? (
+              <ServerSelector
+                servers={servers}
+                selected={selectedServerId}
+                onSelect={setSelectedServerId}
+                onDelete={() => setIsDeleteServerDialogOpen(true)}
+                onAdd={() => setIsServerEditorOpen(true)}
+              />
           ) : (
-            <NoServersCard onAdd={() => setIsServerEditorOpen(true)} />
+              <NoServersCard onAdd={() => setIsServerEditorOpen(true)} />
           )}
 
           {selectedServer && (
-            <>
-              <div className="mb-8 flex items-start gap-4">
-                <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100">
-                  <ShieldCheck className="size-6" strokeWidth={2} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    Your secure connection
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
-                    Manage the OpenVPN profile and devices registered to your
-                    account in {selectedServer.name}.
-                  </p>
-                </div>
-              </div>
+            <div className="mt-10 space-y-10 border-t border-slate-100 pt-8 dark:border-slate-800">
               <section
-                aria-labelledby="profile-heading"
-                className="rounded-2xl border border-slate-200 bg-slate-50/65 p-4 sm:p-5"
+                aria-labelledby="profile-section-heading"
               >
+                <div className="mb-3">
+                  <p className="text-xs font-semibold tracking-[0.12em] text-cyan-700 uppercase dark:text-cyan-300">
+                    Connection
+                  </p>
+                  <h2 id="profile-section-heading" className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
+                    OpenVPN profile
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Download and manage the profile for {selectedServer.name}.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/65 p-4 dark:border-slate-700 dark:bg-slate-900/80 sm:p-5">
                 {selectedServer.profile ? (
                   <ProfileCard
                     isAdmin={user.is_admin}
@@ -286,23 +325,26 @@ export default function Home() {
                     server={selectedServer}
                   />
                 )}
+                </div>
               </section>
-              <section aria-labelledby="devices-heading" className="mt-8">
+              <section aria-labelledby="devices-heading">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
+                    <p className="text-xs font-semibold tracking-[0.12em] text-cyan-700 uppercase dark:text-cyan-300">
+                      Access
+                    </p>
                     <h2
                       id="devices-heading"
-                      className="text-sm font-semibold text-slate-900"
+                      className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100"
                     >
                       Registered devices
                     </h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {/* {selectedServer.devices.length} of{" "}
-                      {selectedServer.deviceLimit} devices in use */}
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      Devices authorized to use {selectedServer.name}.
                     </p>
                   </div>
                 </div>
-                <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/65 dark:border-slate-700 dark:bg-slate-900/80">
                   {/* {selectedServer.devices.length > 0 ? (
                     selectedServer.devices.map(
                       ({ name, detail, icon: Icon, current }) => (
@@ -350,6 +392,14 @@ export default function Home() {
                       </p>
                     </div>
                   )} */}
+                  <div className="px-5 py-7 text-center">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      No devices registered
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      Devices registered to this server will appear here.
+                    </p>
+                  </div>
                 </div>
               </section>
               <footer className="mt-7 flex items-center justify-between border-t border-slate-100 pt-5 text-xs text-slate-400">
@@ -359,7 +409,7 @@ export default function Home() {
                   systems operational
                 </span>
               </footer>
-            </>
+            </div>
           )}
           {user.is_admin && profileEditor && profileEditorServer && (
             <ProfileEditorDialog
