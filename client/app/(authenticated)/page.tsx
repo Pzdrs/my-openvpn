@@ -5,12 +5,14 @@ import Header from "@/components/Header";
 import ProfileEditorDialog, {
   ProfileEditorState,
 } from "@/components/modal/profile-editor-dialog";
+import DeviceEnrollmentDialog, { DeviceEnrollment } from "@/components/modal/device-enrollment-dialog";
 import ServerEditorDialog from "@/components/modal/server-editor-dialog";
 import NoProfileCard from "@/components/no-profile-card";
 import NoServersCard from "@/components/no-servers-card";
 import ProfileCard from "@/components/profile-card";
 import ServerSelector from "@/components/server-selector";
 import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import {
   createServer,
@@ -23,7 +25,30 @@ import {
 } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/context";
 import { ok } from "@oazapfts/runtime";
+import { Download, Laptop, Monitor, Pencil, Plus, RefreshCw, ShieldOff, Smartphone, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+type ManagedDevice = {
+  id: string;
+  name: string;
+  type: "mobile" | "laptop" | "desktop";
+  expiresAt: string;
+};
+
+const mockDevices: ManagedDevice[] = [
+  { id: "phone", name: "Avery’s iPhone", type: "mobile", expiresAt: "2027-08-18" },
+  { id: "laptop", name: "Avery’s MacBook Pro", type: "laptop", expiresAt: "2026-12-08" },
+  { id: "desktop", name: "Office workstation", type: "desktop", expiresAt: "2026-11-16" },
+];
+
+const deviceIcons = { mobile: Smartphone, laptop: Laptop, desktop: Monitor };
+
+function certificateStatus(expiresAt: string) {
+  const days = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
+  if (days <= 7) return { label: days <= 0 ? "Expired" : `Expires in ${days} days`, className: "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:ring-rose-900" };
+  if (days <= 30) return { label: `Expires in ${days} days`, className: "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/50 dark:text-amber-300 dark:ring-amber-900" };
+  return { label: "Valid", className: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-900" };
+}
 
 export default function Home() {
   const { user } = useAuth();
@@ -36,6 +61,10 @@ export default function Home() {
   const [isServerEditorOpen, setIsServerEditorOpen] = useState(false);
   const [isDeleteServerDialogOpen, setIsDeleteServerDialogOpen] =
     useState(false);
+  const [isDeviceEnrollmentOpen, setIsDeviceEnrollmentOpen] = useState(false);
+  const [devices, setDevices] = useState<ManagedDevice[]>(mockDevices);
+  const [editingDevice, setEditingDevice] = useState<ManagedDevice | null>(null);
+  const [deviceToRemove, setDeviceToRemove] = useState<ManagedDevice | null>(null);
 
   const [isLoadingServers, setIsLoadingServers] = useState(true);
 
@@ -207,6 +236,29 @@ export default function Home() {
       });
   }
 
+  function enrollDevice(device: DeviceEnrollment) {
+    console.log("Enroll device", { serverId: selectedServerId, ...device });
+    setIsDeviceEnrollmentOpen(false);
+    setDevices((current) => [
+      ...current,
+      { id: crypto.randomUUID(), name: device.name, type: device.type ?? "desktop", expiresAt: "2027-11-11" },
+    ]);
+  }
+
+  function updateDevice(device: DeviceEnrollment) {
+    if (!editingDevice) return;
+    console.log("Update device", { id: editingDevice.id, ...device });
+    setDevices((current) => current.map((item) => item.id === editingDevice.id ? { ...item, name: device.name, type: device.type ?? item.type } : item));
+    setEditingDevice(null);
+  }
+
+  function removeDevice() {
+    if (!deviceToRemove) return;
+    console.log("Remove device", deviceToRemove);
+    setDevices((current) => current.filter((item) => item.id !== deviceToRemove.id));
+    setDeviceToRemove(null);
+  }
+
   return (
     <main
       className={`vpn-dashboard relative min-h-screen overflow-hidden bg-[#f6f8fb] px-4 py-7 sm:px-6 sm:py-12 ${darkMode ? "dark" : ""}`}
@@ -328,7 +380,7 @@ export default function Home() {
                 </div>
               </section>
               <section aria-labelledby="devices-heading">
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold tracking-[0.12em] text-cyan-700 uppercase dark:text-cyan-300">
                       Access
@@ -343,63 +395,40 @@ export default function Home() {
                       Devices authorized to use {selectedServer.name}.
                     </p>
                   </div>
+                  <Button
+                    className="mt-0.5 bg-slate-900 text-white hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+                    onClick={() => setIsDeviceEnrollmentOpen(true)}
+                    size="sm"
+                    type="button"
+                  >
+                    <Plus /> Enroll device
+                  </Button>
                 </div>
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/65 dark:border-slate-700 dark:bg-slate-900/80">
-                  {/* {selectedServer.devices.length > 0 ? (
-                    selectedServer.devices.map(
-                      ({ name, detail, icon: Icon, current }) => (
-                        <div
-                          className="flex items-center gap-3.5 px-4 py-3.5"
-                          key={name}
-                        >
-                          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
-                            <Icon className="size-[17px]" />
-                          </div>
+                  {/* Overflow menu na remove a edit a revoke + na karte chceme download a renew (disabled pro expiry > 30 dni)*/}
+                  {devices.map((device) => {
+                    const Icon = deviceIcons[device.type];
+                    const status = certificateStatus(device.expiresAt);
+                    return (
+                      <div className="border-b border-slate-200 p-4 last:border-b-0 dark:border-slate-700" key={device.id}>
+                        <div className="flex items-start gap-3">
+                          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"><Icon className="size-[18px]" /></div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate text-sm font-medium text-slate-800">
-                                {name}
-                              </p>
-                              {current && (
-                                <span
-                                  aria-label="Currently active"
-                                  className="size-1.5 shrink-0 rounded-full bg-emerald-500"
-                                />
-                              )}
-                            </div>
-                            <p className="mt-0.5 truncate text-xs text-slate-500">
-                              {detail}
-                            </p>
+                            <div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{device.name}</p><span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-medium ring-1 ${status.className}`}>{status.label}</span></div>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{device.type[0].toUpperCase() + device.type.slice(1)} · Certificate expires {new Date(device.expiresAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>
                           </div>
-                          <Button
-                            aria-label={`Options for ${name}`}
-                            className="text-slate-400 hover:text-slate-700"
-                            size="icon-xs"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="size-4" />
-                          </Button>
+                          <div className="flex shrink-0 gap-1">
+                            <Button aria-label={`Edit ${device.name}`} className="text-slate-500" onClick={() => setEditingDevice(device)} size="icon-xs" type="button" variant="ghost"><Pencil className="size-3.5" /></Button>
+                            <Button aria-label={`Remove ${device.name}`} onClick={() => setDeviceToRemove(device)} size="icon-xs" type="button" variant="destructive"><Trash2 className="size-3.5" /></Button>
+                          </div>
                         </div>
-                      ),
-                    )
-                  ) : (
-                    <div className="px-4 py-8 text-center">
-                      <p className="text-sm font-medium text-slate-700">
-                        No devices registered
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Devices added to {selectedServer.name} will appear here.
-                      </p>
-                    </div>
-                  )} */}
-                  <div className="px-5 py-7 text-center">
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                      No devices registered
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      Devices registered to this server will appear here.
-                    </p>
-                  </div>
+                        <div className="mt-3 flex flex-wrap gap-2 pl-[52px]">
+                          <Button onClick={() => console.log("Download device certificate", device)} size="sm" type="button" variant="outline"><Download className="size-3.5" /> Download certificate</Button>
+                          <Button onClick={() => console.log("Renew device certificate", device)} size="sm" type="button" variant="secondary"><RefreshCw className="size-3.5" /> Renew certificate</Button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
               <footer className="mt-7 flex items-center justify-between border-t border-slate-100 pt-5 text-xs text-slate-400">
@@ -427,6 +456,21 @@ export default function Home() {
             onSave={handleAddServer}
             open={isServerEditorOpen}
           />
+          <DeviceEnrollmentDialog
+            onClose={() => setIsDeviceEnrollmentOpen(false)}
+            onEnroll={enrollDevice}
+            open={isDeviceEnrollmentOpen}
+          />
+          {editingDevice && (
+            <DeviceEnrollmentDialog
+              initialDevice={editingDevice}
+              key={editingDevice.id}
+              mode="edit"
+              onClose={() => setEditingDevice(null)}
+              onEnroll={updateDevice}
+              open
+            />
+          )}
           <ConfirmDeleteDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
@@ -438,6 +482,13 @@ export default function Home() {
             onOpenChange={setIsDeleteServerDialogOpen}
             open={isDeleteServerDialogOpen}
             title="Delete server?"
+          />
+          <ConfirmDeleteDialog
+            description={`This will remove ${deviceToRemove?.name ?? "this device"} and revoke its certificate.`}
+            onConfirm={removeDevice}
+            onOpenChange={(open) => { if (!open) setDeviceToRemove(null); }}
+            open={deviceToRemove !== null}
+            title="Remove device?"
           />
         </div>
       </section>
